@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/patients")
@@ -25,7 +24,7 @@ public class PatientController {
     }
 
     @GetMapping("/{email}")
-    public Optional<Patient> getPatientByEmail(
+    public Patient getPatientByEmail(
             @PathVariable String email
     ) {
         return patientService.getPatientByEmail(email);

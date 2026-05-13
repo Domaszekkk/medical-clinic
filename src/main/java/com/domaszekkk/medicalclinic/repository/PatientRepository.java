@@ -1,5 +1,6 @@
 package com.domaszekkk.medicalclinic.repository;
 
+import com.domaszekkk.medicalclinic.exception.PatientNotFoundException;
 import com.domaszekkk.medicalclinic.model.Patient;
 import org.springframework.stereotype.Repository;
 
@@ -12,7 +13,7 @@ public class PatientRepository {
     private final List<Patient> patients = new ArrayList<>();
 
     public List<Patient> getAllPatients() {
-        return patients;
+        return new ArrayList<>(patients);
     }
 
     public Patient addPatient(Patient patient) {
@@ -21,12 +22,9 @@ public class PatientRepository {
     }
 
     public Optional<Patient> getPatientByEmail(String email) {
-        for (Patient patient : patients) {
-            if (patient.getEmail().equals(email)) {
-                return Optional.of(patient);
-            }
-        }
-        return Optional.empty();
+        return patients.stream()
+                .filter(patient -> email.equalsIgnoreCase(patient.getEmail()))
+                .findFirst();
     }
 
     public void deletePatientByEmail(String email) {
@@ -34,15 +32,8 @@ public class PatientRepository {
     }
 
     public void updatePatient(String email, Patient updatedPatient) {
-        getPatientByEmail(email)
-                .ifPresent(patient -> {
-                    patient.setFirstName(updatedPatient.getFirstName());
-                    patient.setLastName(updatedPatient.getLastName());
-                    patient.setPhoneNumber(updatedPatient.getPhoneNumber());
-                    patient.setBirthday(updatedPatient.getBirthday());
-                    patient.setPassword(updatedPatient.getPassword());
-                    patient.setIdCardNo(updatedPatient.getIdCardNo());
-                    patient.setEmail(updatedPatient.getEmail());
-                });
+        Patient patient = getPatientByEmail(email)
+                .orElseThrow(() -> new PatientNotFoundException(email));
+        patient.update(updatedPatient);
     }
 }

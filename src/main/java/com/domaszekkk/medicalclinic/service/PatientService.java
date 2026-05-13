@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -21,15 +20,16 @@ public class PatientService {
         return patientRepository.addPatient(patient);
     }
 
-    public Optional<Patient> getPatientByEmail(String email) {
-        return patientRepository.getPatientByEmail(email);
+    public Patient getPatientByEmail(String email) {
+        return patientRepository.getPatientByEmail(email)
+                .orElseThrow();
     }
 
     public void deletePatientByEmail(String email) {
         patientRepository.deletePatientByEmail(email);
     }
 
-    public void updatePatient(String email, Patient updatedPatient) {
-        patientRepository.updatePatient(email, updatedPatient);
+    public void updatePatient(String email, Patient updatePatient) {
+        patientRepository.updatePatient(email, updatePatient);
     }
 }

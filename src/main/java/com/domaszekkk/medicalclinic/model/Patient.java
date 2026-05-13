@@ -19,4 +19,14 @@ public class Patient {
     private String lastName;
     private String phoneNumber;
     private LocalDate birthday;
+
+    public void update(Patient updatedPatient) {
+        this.firstName = updatedPatient.getFirstName();
+        this.lastName = updatedPatient.getLastName();
+        this.phoneNumber = updatedPatient.getPhoneNumber();
+        this.birthday = updatedPatient.getBirthday();
+        this.password = updatedPatient.getPassword();
+        this.idCardNo = updatedPatient.getIdCardNo();
+        this.email = updatedPatient.getEmail();
+    }
 }
