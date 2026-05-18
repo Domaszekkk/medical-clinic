@@ -32,4 +32,8 @@ public class PatientService {
     public void updatePatient(String email, Patient updatePatient) {
         patientRepository.updatePatient(email, updatePatient);
     }
+
+    public void updatePassword(String email, String password) {
+        patientRepository.updatePassword(email, password);
+    }
 }
