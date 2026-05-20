@@ -1,5 +1,6 @@
 package com.domaszekkk.medicalclinic.service;
 
+import com.domaszekkk.medicalclinic.exception.PatientNotFoundException;
 import com.domaszekkk.medicalclinic.model.Patient;
 import com.domaszekkk.medicalclinic.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class PatientService {
 
     public Patient getPatientByEmail(String email) {
         return patientRepository.getPatientByEmail(email)
-                .orElseThrow();
+                .orElseThrow(() -> new PatientNotFoundException(email));
     }
 
     public void deletePatientByEmail(String email) {

@@ -1,5 +1,6 @@
 package com.domaszekkk.medicalclinic.repository;
 
+import com.domaszekkk.medicalclinic.exception.PatientAlreadyExistsException;
 import com.domaszekkk.medicalclinic.exception.PatientNotFoundException;
 import com.domaszekkk.medicalclinic.model.Patient;
 import org.springframework.stereotype.Repository;
@@ -17,6 +18,9 @@ public class PatientRepository {
     }
 
     public Patient addPatient(Patient patient) {
+        if (getPatientByEmail(patient.getEmail()).isPresent()) {
+            throw new PatientAlreadyExistsException(patient.getEmail());
+        }
         patients.add(patient);
         return patient;
     }

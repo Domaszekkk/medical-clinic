@@ -1,6 +1,6 @@
 package com.domaszekkk.medicalclinic.controller;
 
-import com.domaszekkk.command.ChangePasswordCommand;
+import com.domaszekkk.medicalclinic.command.ChangePasswordCommand;
 import com.domaszekkk.medicalclinic.model.Patient;
 import com.domaszekkk.medicalclinic.service.PatientService;
 import lombok.RequiredArgsConstructor;
