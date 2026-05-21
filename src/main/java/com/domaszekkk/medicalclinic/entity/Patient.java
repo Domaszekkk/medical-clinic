@@ -1,4 +1,4 @@
-package com.domaszekkk.medicalclinic.model;
+package com.domaszekkk.medicalclinic.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

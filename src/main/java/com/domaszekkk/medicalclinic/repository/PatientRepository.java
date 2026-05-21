@@ -2,7 +2,7 @@ package com.domaszekkk.medicalclinic.repository;
 
 import com.domaszekkk.medicalclinic.exception.PatientAlreadyExistsException;
 import com.domaszekkk.medicalclinic.exception.PatientNotFoundException;
-import com.domaszekkk.medicalclinic.model.Patient;
+import com.domaszekkk.medicalclinic.entity.Patient;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
