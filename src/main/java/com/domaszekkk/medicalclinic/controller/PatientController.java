@@ -29,17 +29,13 @@ public class PatientController {
     }
 
     @GetMapping("/{email}")
-    public PatientDto getPatientByEmail(
-            @PathVariable String email
-    ) {
+    public PatientDto getPatientByEmail(@PathVariable String email) {
         return patientService.getPatientByEmail(email);
     }
 
     @DeleteMapping("/{email}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deletePatientByEmail(
-            @PathVariable String email
-    ) {
+    public void deletePatientByEmail(@PathVariable String email) {
         patientService.deletePatientByEmail(email);
     }
 
