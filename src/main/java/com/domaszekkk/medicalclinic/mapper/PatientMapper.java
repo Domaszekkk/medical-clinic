@@ -5,13 +5,16 @@ import com.domaszekkk.medicalclinic.dto.PatientDto;
 import com.domaszekkk.medicalclinic.dto.UpdatePatientRequest;
 import com.domaszekkk.medicalclinic.entity.Patient;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = UserMapper.class)
 public interface PatientMapper {
     PatientDto mapToDto(Patient patient);
     List<PatientDto> mapToDtoList(List<Patient> patients);
+    @Mapping(target = "id", ignore = true)
     Patient mapToEntity(AddPatientRequest request);
+    @Mapping(target = "id", ignore = true)
     Patient mapToEntity(UpdatePatientRequest request);
 }

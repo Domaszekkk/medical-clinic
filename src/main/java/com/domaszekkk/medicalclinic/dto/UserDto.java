@@ -5,17 +5,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class PatientDto {
+public class UserDto {
     private Long id;
-    private String firstName;
-    private String lastName;
-    private String phoneNumber;
-    private LocalDate birthday;
-    private UserDto user;
+    private String email;
 }

@@ -8,11 +8,10 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class UpdatePatientRequest {
-    private String email;
-    private String password;
     private String idCardNo;
     private String firstName;
     private String lastName;
     private String phoneNumber;
     private LocalDate birthday;
+    private UpdateUserRequest user;
 }

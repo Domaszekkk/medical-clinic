@@ -1,32 +1,41 @@
 package com.domaszekkk.medicalclinic.entity;
 
+import jakarta.persistence.*;
+import jakarta.websocket.OnError;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-
+@Entity
+@Table(name = "patients")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class Patient {
-    private String email;
-    private String password;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     private String idCardNo;
     private String firstName;
     private String lastName;
     private String phoneNumber;
     private LocalDate birthday;
 
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     public void update(Patient updatedPatient) {
         this.firstName = updatedPatient.getFirstName();
         this.lastName = updatedPatient.getLastName();
         this.phoneNumber = updatedPatient.getPhoneNumber();
         this.birthday = updatedPatient.getBirthday();
-        this.password = updatedPatient.getPassword();
         this.idCardNo = updatedPatient.getIdCardNo();
-        this.email = updatedPatient.getEmail();
+        this.user.setEmail(updatedPatient.getUser().getEmail());
+        this.user.setPassword(updatedPatient.getUser().getPassword());
     }
 }
