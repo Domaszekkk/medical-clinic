@@ -17,5 +17,5 @@ public class PatientDto {
     private String lastName;
     private String phoneNumber;
     private LocalDate birthday;
-    private UserDto user;
+    private Long userId;
 }

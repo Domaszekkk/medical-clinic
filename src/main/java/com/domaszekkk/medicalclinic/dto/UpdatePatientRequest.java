@@ -13,5 +13,5 @@ public class UpdatePatientRequest {
     private String lastName;
     private String phoneNumber;
     private LocalDate birthday;
-    private UpdateUserRequest user;
+    private Long userId;
 }

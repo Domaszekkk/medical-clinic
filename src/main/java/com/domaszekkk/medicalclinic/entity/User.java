@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -18,8 +20,8 @@ public class User {
     private Long id;
     private String email;
     private String password;
-    @OneToOne(mappedBy = "user")
-    private Patient patient;
+    @OneToMany(mappedBy = "user")
+    private List<Patient> patients;
 
     public void update(User updatedUser) {
         this.email = updatedUser.getEmail();
