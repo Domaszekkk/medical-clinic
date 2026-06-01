@@ -1,4 +1,4 @@
-package com.domaszekkk.command;
+package com.domaszekkk.medicalclinic.dto;
 
 import lombok.Getter;
 import lombok.Setter;
