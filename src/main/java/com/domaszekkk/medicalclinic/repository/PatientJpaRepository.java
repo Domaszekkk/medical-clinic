@@ -8,6 +8,5 @@ import java.util.Optional;
 
 public interface PatientJpaRepository extends JpaRepository<Patient, Long> {
     Optional<Patient> findByUserEmail(String email);
-    @Transactional
     void deleteByUserEmail(String email);
 }

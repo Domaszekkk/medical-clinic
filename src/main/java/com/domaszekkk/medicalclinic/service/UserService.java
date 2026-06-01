@@ -1,6 +1,6 @@
 package com.domaszekkk.medicalclinic.service;
 
-import com.domaszekkk.medicalclinic.dto.AddUserRequest;
+import com.domaszekkk.medicalclinic.dto.AddUserCommand;
 import com.domaszekkk.medicalclinic.dto.UpdateUserRequest;
 import com.domaszekkk.medicalclinic.dto.UserDto;
 import com.domaszekkk.medicalclinic.entity.User;
@@ -8,6 +8,7 @@ import com.domaszekkk.medicalclinic.exception.PatientNotFoundException;
 import com.domaszekkk.medicalclinic.exception.UserNotFoundException;
 import com.domaszekkk.medicalclinic.mapper.UserMapper;
 import com.domaszekkk.medicalclinic.repository.UserJpaRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +31,7 @@ public class UserService {
         return userMapper.mapToDto(user);
     }
 
-    public UserDto addUser(AddUserRequest request) {
+    public UserDto addUser(AddUserCommand request) {
         User user = userMapper.mapToEntity(request);
         return userMapper.mapToDto(userJpaRepository.save(user));
     }
@@ -39,11 +40,10 @@ public class UserService {
         User user = userJpaRepository
                 .findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException(email));
-        user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
+        user.update(userMapper.mapToEntity(request));
         userJpaRepository.save(user);
     }
-
+    @Transactional
     public void deleteUser(String email) {
         userJpaRepository.deleteByEmail(email);
     }

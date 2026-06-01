@@ -11,11 +11,11 @@ import java.time.LocalDate;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class AddPatientRequest {
+public class AddPatientCommand {
     private String idCardNo;
     private String firstName;
     private String lastName;
     private String phoneNumber;
     private LocalDate birthday;
-    private AddUserRequest user;
+    private AddUserCommand user;
 }

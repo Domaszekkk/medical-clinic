@@ -1,7 +1,7 @@
 package com.domaszekkk.medicalclinic.controller;
 
 import com.domaszekkk.medicalclinic.dto.ChangePasswordCommand;
-import com.domaszekkk.medicalclinic.dto.AddPatientRequest;
+import com.domaszekkk.medicalclinic.dto.AddPatientCommand;
 import com.domaszekkk.medicalclinic.dto.PatientDto;
 import com.domaszekkk.medicalclinic.dto.UpdatePatientRequest;
 import com.domaszekkk.medicalclinic.service.PatientService;
@@ -24,7 +24,7 @@ public class PatientController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PatientDto addPatient(@RequestBody AddPatientRequest request) {
+    public PatientDto addPatient(@RequestBody AddPatientCommand request) {
         return patientService.addPatient(request);
     }
 
@@ -40,9 +40,8 @@ public class PatientController {
     }
 
     @PutMapping("/{email}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updatePatient(@PathVariable String email, @RequestBody UpdatePatientRequest request) {
-        patientService.updatePatient(email, request);
+    public PatientDto updatePatient(@PathVariable String email, @RequestBody UpdatePatientRequest request) {
+        return patientService.updatePatient(email, request);
     }
 
     @PatchMapping("/{email}/password")

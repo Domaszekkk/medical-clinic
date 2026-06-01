@@ -18,4 +18,11 @@ public class User {
     private Long id;
     private String email;
     private String password;
+    @OneToOne(mappedBy = "user")
+    private Patient patient;
+
+    public void update(User updatedUser) {
+        this.email = updatedUser.getEmail();
+        this.password = updatedUser.getPassword();
+    }
 }

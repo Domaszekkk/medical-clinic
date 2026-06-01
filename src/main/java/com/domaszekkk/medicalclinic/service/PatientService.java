@@ -1,12 +1,13 @@
 package com.domaszekkk.medicalclinic.service;
 
-import com.domaszekkk.medicalclinic.dto.AddPatientRequest;
+import com.domaszekkk.medicalclinic.dto.AddPatientCommand;
 import com.domaszekkk.medicalclinic.dto.PatientDto;
 import com.domaszekkk.medicalclinic.dto.UpdatePatientRequest;
 import com.domaszekkk.medicalclinic.exception.PatientNotFoundException;
 import com.domaszekkk.medicalclinic.entity.Patient;
 import com.domaszekkk.medicalclinic.mapper.PatientMapper;
 import com.domaszekkk.medicalclinic.repository.PatientJpaRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,7 @@ public class PatientService {
         return patientMapper.mapToDtoList(patientJpaRepository.findAll());
     }
 
-    public PatientDto addPatient(AddPatientRequest request) {
+    public PatientDto addPatient(AddPatientCommand request) {
         Patient patient = patientMapper.mapToEntity(request);
         return patientMapper.mapToDto(patientJpaRepository.save(patient));
     }
@@ -33,17 +34,18 @@ public class PatientService {
                 .orElseThrow(() -> new PatientNotFoundException(email));
         return patientMapper.mapToDto(patient);
     }
-
+    @Transactional
     public void deletePatientByEmail(String email) {
         patientJpaRepository.deleteByUserEmail(email);
     }
 
-    public void updatePatient(String email, UpdatePatientRequest request) {
+    public PatientDto updatePatient(String email, UpdatePatientRequest request) {
         Patient patient = patientJpaRepository
                 .findByUserEmail(email)
                 .orElseThrow(() -> new PatientNotFoundException(email));
         patient.update(patientMapper.mapToEntity(request));
         patientJpaRepository.save(patient);
+        return patientMapper.mapToDto(patient);
     }
 
     public void updatePassword(String email, String password) {

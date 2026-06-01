@@ -1,6 +1,6 @@
 package com.domaszekkk.medicalclinic.controller;
 
-import com.domaszekkk.medicalclinic.dto.AddUserRequest;
+import com.domaszekkk.medicalclinic.dto.AddUserCommand;
 import com.domaszekkk.medicalclinic.dto.UpdateUserRequest;
 import com.domaszekkk.medicalclinic.dto.UserDto;
 import com.domaszekkk.medicalclinic.service.UserService;
@@ -28,7 +28,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDto addUser(@RequestBody AddUserRequest request) {
+    public UserDto addUser(@RequestBody AddUserCommand request) {
         return userService.addUser(request);
     }
 
