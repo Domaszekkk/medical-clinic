@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class VisitDto {
     private Long Id;
-    private LocalDateTime dateTime;
+    private LocalDateTime startDateTime;
     private Long doctorId;
     private Long patientId;
+    private LocalDateTime endDateTime;
 }

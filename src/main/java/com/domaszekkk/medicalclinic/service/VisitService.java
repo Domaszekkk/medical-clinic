@@ -29,24 +29,24 @@ public class VisitService {
                 .findById(doctorId)
                 .orElseThrow(() -> new DoctorNotFoundException(doctorId));
 
-        validateVisitDate(doctorId, command.getDateTime());
+        validateVisitDate(doctorId, command.getStartDateTime(), command.getEndDateTime());
 
         Visit visit = visitMapper.mapToEntity(command);
         visit.setDoctor(doctor);
         return visitMapper.mapToDto(visitJpaRepository.save(visit));
     }
 
-    private void validateVisitDate(Long doctorId, LocalDateTime dateTime) {
-        if (dateTime.isBefore(LocalDateTime.now())) {
+    private void validateVisitDate(Long doctorId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        if (startDateTime.isBefore(LocalDateTime.now())) {
             throw new InvalidVisitDateException("Cannot create visit in the past");
         }
 
-        if (dateTime.getMinute() % 15 != 0) {
+        if (startDateTime.getMinute() % 15 != 0) {
             throw new InvalidVisitDateException("Visit must be at full quarter of an hour");
         }
 
-        if (visitJpaRepository.existsByDoctorIdAndDateTime(doctorId, dateTime)) {
-            throw new DoctorVisitConflictException(dateTime);
+        if (!visitJpaRepository.findConflictingVisits(doctorId, startDateTime, endDateTime).isEmpty()) {
+            throw new DoctorVisitConflictException(startDateTime);
         }
     }
 
@@ -70,7 +70,7 @@ public class VisitService {
             throw new VisitAlreadyTakenException(visit.getId());
         }
 
-        if (visit.getDateTime().isBefore(LocalDateTime.now())) {
+        if (visit.getStartDateTime().isBefore(LocalDateTime.now())) {
             throw new InvalidVisitDateException("cannot register for past visit");
         }
     }

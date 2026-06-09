@@ -15,6 +15,7 @@ public interface VisitMapper {
     VisitDto mapToDto(Visit visit);
 
     List<VisitDto> mapToDtoList(List<Visit> visits);
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "doctor", ignore = true)
     @Mapping(target = "patient", ignore = true)
