@@ -15,10 +15,10 @@ public interface UserMapper {
     List<UserDto> mapToDtoList(List<User> users);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "patient", ignore = true)
+    @Mapping(target = "patients", ignore = true)
     User mapToEntity(AddUserCommand request);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "patient", ignore = true)
+    @Mapping(target = "patients", ignore = true)
     User mapToEntity(UpdateUserRequest request);
 }

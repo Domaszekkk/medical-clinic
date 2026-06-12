@@ -9,12 +9,20 @@ import org.mapstruct.Mapping;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = UserMapper.class)
+@Mapper(componentModel = "spring")
 public interface PatientMapper {
+    @Mapping(target = "userId", source = "user.id")
     PatientDto mapToDto(Patient patient);
+
     List<PatientDto> mapToDtoList(List<Patient> patients);
+
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "visits", ignore = true)
     Patient mapToEntity(AddPatientCommand request);
+
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "visits", ignore = true)
     Patient mapToEntity(UpdatePatientRequest request);
 }

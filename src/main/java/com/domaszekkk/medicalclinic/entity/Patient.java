@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.List;
+
 @Entity
 @Table(name = "patients")
 @Getter
@@ -25,9 +27,12 @@ public class Patient {
     private String phoneNumber;
     private LocalDate birthday;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @OneToMany(mappedBy = "patient")
+    private List<Visit> visits;
 
     public void update(Patient updatedPatient) {
         this.firstName = updatedPatient.getFirstName();
