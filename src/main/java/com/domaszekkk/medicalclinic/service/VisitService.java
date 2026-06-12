@@ -5,15 +5,17 @@ import com.domaszekkk.medicalclinic.dto.VisitDto;
 import com.domaszekkk.medicalclinic.entity.Doctor;
 import com.domaszekkk.medicalclinic.entity.Patient;
 import com.domaszekkk.medicalclinic.entity.Visit;
-import com.domaszekkk.medicalclinic.exception.*;
+import com.domaszekkk.medicalclinic.exception.DoctorNotFoundException;
+import com.domaszekkk.medicalclinic.exception.PatientNotFoundException;
+import com.domaszekkk.medicalclinic.exception.VisitNotFoundException;
 import com.domaszekkk.medicalclinic.mapper.VisitMapper;
 import com.domaszekkk.medicalclinic.repository.DoctorJpaRepository;
 import com.domaszekkk.medicalclinic.repository.PatientJpaRepository;
 import com.domaszekkk.medicalclinic.repository.VisitJpaRepository;
+import com.domaszekkk.medicalclinic.validator.VisitValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -21,33 +23,20 @@ import java.util.List;
 public class VisitService {
     private final VisitJpaRepository visitJpaRepository;
     private final DoctorJpaRepository doctorJpaRepository;
-    private final VisitMapper visitMapper;
     private final PatientJpaRepository patientJpaRepository;
+    private final VisitMapper visitMapper;
+    private final VisitValidator visitValidator;
 
     public VisitDto addVisit(Long doctorId, AddVisitCommand command) {
         Doctor doctor = doctorJpaRepository
                 .findById(doctorId)
                 .orElseThrow(() -> new DoctorNotFoundException(doctorId));
 
-        validateVisitDate(doctorId, command.getStartDateTime(), command.getEndDateTime());
+        visitValidator.validateVisitDate(doctorId, command.getStartDateTime(), command.getEndDateTime());
 
         Visit visit = visitMapper.mapToEntity(command);
         visit.setDoctor(doctor);
         return visitMapper.mapToDto(visitJpaRepository.save(visit));
-    }
-
-    private void validateVisitDate(Long doctorId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        if (startDateTime.isBefore(LocalDateTime.now())) {
-            throw new InvalidVisitDateException("Cannot create visit in the past");
-        }
-
-        if (startDateTime.getMinute() % 15 != 0) {
-            throw new InvalidVisitDateException("Visit must be at full quarter of an hour");
-        }
-
-        if (!visitJpaRepository.findConflictingVisits(doctorId, startDateTime, endDateTime).isEmpty()) {
-            throw new DoctorVisitConflictException(startDateTime);
-        }
     }
 
     public VisitDto registerPatientForVisit(Long visitId, Long patientId) {
@@ -59,20 +48,10 @@ public class VisitService {
                 .findById(patientId)
                 .orElseThrow(() -> new PatientNotFoundException(patientId.toString()));
 
-        validatePatientRegistration(visit);
+        visitValidator.validatePatientRegistration(visit);
 
         visit.setPatient(patient);
         return visitMapper.mapToDto(visitJpaRepository.save(visit));
-    }
-
-    private void validatePatientRegistration(Visit visit) {
-        if (visit.getPatient() != null) {
-            throw new VisitAlreadyTakenException(visit.getId());
-        }
-
-        if (visit.getStartDateTime().isBefore(LocalDateTime.now())) {
-            throw new InvalidVisitDateException("cannot register for past visit");
-        }
     }
 
     public List<VisitDto> getPatientVisits(Long patientId) {
