@@ -4,19 +4,16 @@ import com.domaszekkk.medicalclinic.entity.Visit;
 import com.domaszekkk.medicalclinic.exception.DoctorVisitConflictException;
 import com.domaszekkk.medicalclinic.exception.InvalidVisitDateException;
 import com.domaszekkk.medicalclinic.exception.VisitAlreadyTakenException;
-import com.domaszekkk.medicalclinic.repository.VisitJpaRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Component
-@RequiredArgsConstructor
-public class VisitValidator {
-    private final VisitJpaRepository visitJpaRepository;
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class VisitValidator {
 
-    public void validateVisitDate(Long doctorId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    public static void validateVisitDate(LocalDateTime startDateTime, LocalDateTime endDateTime) {
         if (startDateTime.isBefore(LocalDateTime.now())) {
             throw new InvalidVisitDateException("Cannot create visit in the past");
         }
@@ -24,14 +21,15 @@ public class VisitValidator {
         if (startDateTime.getMinute() % 15 != 0) {
             throw new InvalidVisitDateException("Visit must be at full quarter of an hour");
         }
+    }
 
-        List<Visit> conflictingVisits = visitJpaRepository.findConflictingVisits(doctorId, startDateTime, endDateTime);
+    public static void validateConflictingVisits(List<Visit> conflictingVisits, LocalDateTime startDateTime) {
         if (!conflictingVisits.isEmpty()) {
             throw new DoctorVisitConflictException(startDateTime);
         }
     }
 
-    public void validatePatientRegistration(Visit visit) {
+    public static void validatePatientRegistration(Visit visit) {
         if (visit.getPatient() != null) {
             throw new VisitAlreadyTakenException(visit.getId());
         }

@@ -25,14 +25,17 @@ public class VisitService {
     private final DoctorJpaRepository doctorJpaRepository;
     private final PatientJpaRepository patientJpaRepository;
     private final VisitMapper visitMapper;
-    private final VisitValidator visitValidator;
 
     public VisitDto addVisit(Long doctorId, AddVisitCommand command) {
         Doctor doctor = doctorJpaRepository
                 .findById(doctorId)
                 .orElseThrow(() -> new DoctorNotFoundException(doctorId));
 
-        visitValidator.validateVisitDate(doctorId, command.getStartDateTime(), command.getEndDateTime());
+        VisitValidator.validateVisitDate(command.getStartDateTime(), command.getEndDateTime());
+
+        List<Visit> conflictingVisits = visitJpaRepository.findConflictingVisits(
+                doctorId, command.getStartDateTime(), command.getEndDateTime());
+        VisitValidator.validateConflictingVisits(conflictingVisits, command.getStartDateTime());
 
         Visit visit = visitMapper.mapToEntity(command);
         visit.setDoctor(doctor);
@@ -48,7 +51,7 @@ public class VisitService {
                 .findById(patientId)
                 .orElseThrow(() -> new PatientNotFoundException(patientId.toString()));
 
-        visitValidator.validatePatientRegistration(visit);
+        VisitValidator.validatePatientRegistration(visit);
 
         visit.setPatient(patient);
         return visitMapper.mapToDto(visitJpaRepository.save(visit));
