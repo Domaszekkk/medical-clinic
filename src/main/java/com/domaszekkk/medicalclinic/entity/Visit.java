@@ -26,6 +26,6 @@ public class Visit {
     private Doctor doctor;
 
     @ManyToOne
-    @JoinColumn(name = "patient_id")
+    @JoinColumn(name = "patient_id", nullable = true)
     private Patient patient;
 }

@@ -16,5 +16,6 @@ public interface DoctorMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "facilities", ignore = true)
+    @Mapping(target = "visits", ignore = true)
     Doctor mapToEntity(AddDoctorCommand command);
 }

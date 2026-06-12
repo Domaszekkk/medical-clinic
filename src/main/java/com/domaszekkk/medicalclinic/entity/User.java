@@ -20,7 +20,7 @@ public class User {
     private Long id;
     private String email;
     private String password;
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Patient> patients;
 
     public void update(User updatedUser) {

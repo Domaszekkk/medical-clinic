@@ -32,6 +32,9 @@ public class Doctor {
             inverseJoinColumns = @JoinColumn(name = "facility_id"))
     private List<Facility> facilities;
 
+    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Visit> visits;
+
     public void update(Doctor updatedDoctor) {
         this.email = updatedDoctor.getEmail();
         this.password = updatedDoctor.getPassword();
