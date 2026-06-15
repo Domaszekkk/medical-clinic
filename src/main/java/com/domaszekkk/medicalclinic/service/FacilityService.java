@@ -7,6 +7,8 @@ import com.domaszekkk.medicalclinic.exception.FacilityNotFoundException;
 import com.domaszekkk.medicalclinic.mapper.FacilityMapper;
 import com.domaszekkk.medicalclinic.repository.FacilityJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,8 +20,9 @@ public class FacilityService {
     private final FacilityJpaRepository facilityJpaRepository;
     private final FacilityMapper facilityMapper;
 
-    public List<FacilityDto> getAllFacilities() {
-        return facilityMapper.mapToDtoList(facilityJpaRepository.findAll());
+    public Page<FacilityDto> getAllFacilities(Pageable pageable) {
+        return facilityJpaRepository.findAll(pageable)
+                .map(facilityMapper::mapToDto);
     }
 
     public FacilityDto addFacility(AddFacilityCommand command) {

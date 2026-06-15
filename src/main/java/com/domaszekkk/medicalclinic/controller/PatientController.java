@@ -6,6 +6,8 @@ import com.domaszekkk.medicalclinic.dto.PatientDto;
 import com.domaszekkk.medicalclinic.dto.UpdatePatientRequest;
 import com.domaszekkk.medicalclinic.service.PatientService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +20,8 @@ public class PatientController {
     private final PatientService patientService;
 
     @GetMapping
-    public List<PatientDto> getAllPatients() {
-        return patientService.getAllPatients();
+    public Page<PatientDto> getAllPatients(Pageable pageable) {
+        return patientService.getAllPatients(pageable);
     }
 
     @PostMapping

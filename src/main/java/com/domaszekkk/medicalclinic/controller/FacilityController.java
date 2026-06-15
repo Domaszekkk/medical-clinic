@@ -4,6 +4,8 @@ import com.domaszekkk.medicalclinic.dto.AddFacilityCommand;
 import com.domaszekkk.medicalclinic.dto.FacilityDto;
 import com.domaszekkk.medicalclinic.service.FacilityService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,8 +18,8 @@ public class FacilityController {
     private final FacilityService facilityService;
 
     @GetMapping
-    public List<FacilityDto> getAllFacilities() {
-        return facilityService.getAllFacilities();
+    public Page<FacilityDto> getAllFacilities(Pageable pageable) {
+        return facilityService.getAllFacilities(pageable);
     }
 
     @GetMapping("/{id}")

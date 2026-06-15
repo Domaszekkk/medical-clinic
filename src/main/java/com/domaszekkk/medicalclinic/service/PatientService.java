@@ -12,6 +12,8 @@ import com.domaszekkk.medicalclinic.repository.PatientJpaRepository;
 import com.domaszekkk.medicalclinic.repository.UserJpaRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,8 +25,9 @@ public class PatientService {
     private final PatientMapper patientMapper;
     private final UserJpaRepository userJpaRepository;
 
-    public List<PatientDto> getAllPatients() {
-        return patientMapper.mapToDtoList(patientJpaRepository.findAll());
+    public Page<PatientDto> getAllPatients(Pageable pageable) {
+        return patientJpaRepository.findAll(pageable)
+                .map(patientMapper::mapToDto);
     }
 
     public PatientDto addPatient(AddPatientCommand command) {

@@ -10,6 +10,8 @@ import com.domaszekkk.medicalclinic.mapper.UserMapper;
 import com.domaszekkk.medicalclinic.repository.UserJpaRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,8 +22,9 @@ public class UserService {
     private final UserJpaRepository userJpaRepository;
     private final UserMapper userMapper;
 
-    public List<UserDto> getAllUsers() {
-        return userMapper.mapToDtoList(userJpaRepository.findAll());
+    public Page<UserDto> getAllUsers(Pageable pageable) {
+        return userJpaRepository.findAll(pageable)
+                .map(userMapper::mapToDto);
     }
 
     public UserDto getUserByEmail(String email) {

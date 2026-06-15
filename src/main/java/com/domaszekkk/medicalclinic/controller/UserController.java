@@ -5,6 +5,8 @@ import com.domaszekkk.medicalclinic.dto.UpdateUserRequest;
 import com.domaszekkk.medicalclinic.dto.UserDto;
 import com.domaszekkk.medicalclinic.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,8 +19,8 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public List<UserDto> getAllUsers() {
-        return userService.getAllUsers();
+    public Page<UserDto> getAllUsers(Pageable pageable) {
+        return userService.getAllUsers(pageable);
     }
 
     @GetMapping("/{email}")
