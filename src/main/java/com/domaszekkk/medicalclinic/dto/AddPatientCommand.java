@@ -17,5 +17,5 @@ public class AddPatientCommand {
     private String lastName;
     private String phoneNumber;
     private LocalDate birthday;
-    private AddUserCommand user;
+    private Long userId;
 }
