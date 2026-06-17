@@ -2,6 +2,7 @@ package com.domaszekkk.medicalclinic.controller;
 
 import com.domaszekkk.medicalclinic.dto.AddDoctorCommand;
 import com.domaszekkk.medicalclinic.dto.DoctorDto;
+import com.domaszekkk.medicalclinic.dto.PageResponse;
 import com.domaszekkk.medicalclinic.service.DoctorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,8 +19,8 @@ public class DoctorController {
     private final DoctorService doctorService;
 
     @GetMapping
-    public Page<DoctorDto> getAllDoctors(Pageable pageable) {
-        return doctorService.getAllDoctors(pageable);
+    public PageResponse<DoctorDto> getAllDoctors(Pageable pageable) {
+        return PageResponse.of(doctorService.getAllDoctors(pageable));
     }
 
     @GetMapping("/{id}")

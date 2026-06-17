@@ -1,6 +1,7 @@
 package com.domaszekkk.medicalclinic.controller;
 
 import com.domaszekkk.medicalclinic.dto.AddUserCommand;
+import com.domaszekkk.medicalclinic.dto.PageResponse;
 import com.domaszekkk.medicalclinic.dto.UpdateUserRequest;
 import com.domaszekkk.medicalclinic.dto.UserDto;
 import com.domaszekkk.medicalclinic.service.UserService;
@@ -19,8 +20,8 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public Page<UserDto> getAllUsers(Pageable pageable) {
-        return userService.getAllUsers(pageable);
+    public PageResponse<UserDto> getAllUsers(Pageable pageable) {
+        return PageResponse.of(userService.getAllUsers(pageable));
     }
 
     @GetMapping("/{email}")

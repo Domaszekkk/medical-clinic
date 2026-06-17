@@ -2,6 +2,7 @@ package com.domaszekkk.medicalclinic.controller;
 
 import com.domaszekkk.medicalclinic.dto.AddFacilityCommand;
 import com.domaszekkk.medicalclinic.dto.FacilityDto;
+import com.domaszekkk.medicalclinic.dto.PageResponse;
 import com.domaszekkk.medicalclinic.service.FacilityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,8 +19,8 @@ public class FacilityController {
     private final FacilityService facilityService;
 
     @GetMapping
-    public Page<FacilityDto> getAllFacilities(Pageable pageable) {
-        return facilityService.getAllFacilities(pageable);
+    public PageResponse<FacilityDto> getAllFacilities(Pageable pageable) {
+        return PageResponse.of(facilityService.getAllFacilities(pageable));
     }
 
     @GetMapping("/{id}")

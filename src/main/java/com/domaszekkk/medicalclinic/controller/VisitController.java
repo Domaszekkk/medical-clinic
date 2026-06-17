@@ -1,6 +1,7 @@
 package com.domaszekkk.medicalclinic.controller;
 
 import com.domaszekkk.medicalclinic.dto.AddVisitCommand;
+import com.domaszekkk.medicalclinic.dto.PageResponse;
 import com.domaszekkk.medicalclinic.dto.VisitDto;
 import com.domaszekkk.medicalclinic.service.VisitService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class VisitController {
     }
 
     @GetMapping("/patients/{patientId}/visits")
-    public Page<VisitDto> getPatientVisits(@PathVariable Long patientId, Pageable pageable) {
-        return visitService.getPatientVisits(patientId, pageable);
+    public PageResponse<VisitDto> getPatientVisits(@PathVariable Long patientId, Pageable pageable) {
+        return PageResponse.of(visitService.getPatientVisits(patientId, pageable));
     }
 }
