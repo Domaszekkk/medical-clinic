@@ -7,14 +7,12 @@ import com.domaszekkk.medicalclinic.entity.Patient;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface PatientMapper {
     @Mapping(target = "userId", source = "user.id")
     PatientDto mapToDto(Patient patient);
 
-    List<PatientDto> mapToDtoList(List<Patient> patients);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
