@@ -18,8 +18,12 @@ public final class VisitValidator {
             throw new InvalidVisitDateException("Cannot create visit in the past");
         }
 
-        if (startDateTime.getMinute() % 15 != 0) {
+        if (startDateTime.getMinute() % 15 != 0 || endDateTime.getMinute() % 15 != 0) {
             throw new InvalidVisitDateException("Visit must be at full quarter of an hour");
+        }
+
+        if (!endDateTime.isAfter(startDateTime)) {
+            throw new InvalidVisitDateException("Visit end date must be after start date");
         }
     }
 

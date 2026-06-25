@@ -6,8 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "visits")
 @Getter
@@ -26,6 +26,6 @@ public class Visit {
     private Doctor doctor;
 
     @ManyToOne
-    @JoinColumn(name = "patient_id", nullable = true)
+    @JoinColumn(name = "patient_id")
     private Patient patient;
 }
