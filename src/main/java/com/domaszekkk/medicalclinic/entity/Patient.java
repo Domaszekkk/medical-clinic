@@ -39,7 +39,5 @@ public class Patient {
         this.phoneNumber = updatedPatient.getPhoneNumber();
         this.birthday = updatedPatient.getBirthday();
         this.idCardNo = updatedPatient.getIdCardNo();
-        this.user.setEmail(updatedPatient.getUser().getEmail());
-        this.user.setPassword(updatedPatient.getUser().getPassword());
     }
 }

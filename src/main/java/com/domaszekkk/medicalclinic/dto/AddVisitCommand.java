@@ -14,4 +14,5 @@ import java.time.LocalDateTime;
 public class AddVisitCommand {
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
+    private Long facilityId;
 }
