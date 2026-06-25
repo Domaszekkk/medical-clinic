@@ -10,10 +10,11 @@ import com.domaszekkk.medicalclinic.mapper.DoctorMapper;
 import com.domaszekkk.medicalclinic.repository.DoctorJpaRepository;
 import com.domaszekkk.medicalclinic.repository.FacilityJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -22,8 +23,9 @@ public class DoctorService {
     private final DoctorMapper doctorMapper;
     private final FacilityJpaRepository facilityJpaRepository;
 
-    public List<DoctorDto> getAllDoctors() {
-        return doctorMapper.mapToDtoList(doctorJpaRepository.findAll());
+    public Page<DoctorDto> getAllDoctors(Pageable pageable) {
+        return doctorJpaRepository.findAll(pageable)
+                .map(doctorMapper::mapToDto);
     }
 
     public DoctorDto addDoctor(AddDoctorCommand command) {
@@ -51,6 +53,7 @@ public class DoctorService {
         doctorJpaRepository.deleteById(id);
     }
 
+    @Transactional
     public DoctorDto assignDoctorToFacility(Long doctorId, Long facilityId) {
         Doctor doctor = doctorJpaRepository
                 .findById(doctorId)

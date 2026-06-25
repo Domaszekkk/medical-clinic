@@ -14,6 +14,8 @@ import com.domaszekkk.medicalclinic.repository.PatientJpaRepository;
 import com.domaszekkk.medicalclinic.repository.VisitJpaRepository;
 import com.domaszekkk.medicalclinic.validator.VisitValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -57,7 +59,8 @@ public class VisitService {
         return visitMapper.mapToDto(visitJpaRepository.save(visit));
     }
 
-    public List<VisitDto> getPatientVisits(Long patientId) {
-        return visitMapper.mapToDtoList(visitJpaRepository.findByPatientId(patientId));
+    public Page<VisitDto> getPatientVisits(Long patientId, Pageable pageable) {
+        return visitJpaRepository.findByPatientId(patientId, pageable)
+                .map(visitMapper::mapToDto);
     }
 }

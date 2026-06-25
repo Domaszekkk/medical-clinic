@@ -1,11 +1,10 @@
 package com.domaszekkk.medicalclinic.controller;
 
-import com.domaszekkk.medicalclinic.dto.ChangePasswordCommand;
-import com.domaszekkk.medicalclinic.dto.AddPatientCommand;
-import com.domaszekkk.medicalclinic.dto.PatientDto;
-import com.domaszekkk.medicalclinic.dto.UpdatePatientRequest;
+import com.domaszekkk.medicalclinic.dto.*;
 import com.domaszekkk.medicalclinic.service.PatientService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +17,8 @@ public class PatientController {
     private final PatientService patientService;
 
     @GetMapping
-    public List<PatientDto> getAllPatients() {
-        return patientService.getAllPatients();
+    public PageResponse<PatientDto> getAllPatients(Pageable pageable) {
+        return PageResponse.of(patientService.getAllPatients(pageable));
     }
 
     @PostMapping

@@ -1,9 +1,12 @@
 package com.domaszekkk.medicalclinic.controller;
 
 import com.domaszekkk.medicalclinic.dto.AddVisitCommand;
+import com.domaszekkk.medicalclinic.dto.PageResponse;
 import com.domaszekkk.medicalclinic.dto.VisitDto;
 import com.domaszekkk.medicalclinic.service.VisitService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,7 +29,7 @@ public class VisitController {
     }
 
     @GetMapping("/patients/{patientId}/visits")
-    public List<VisitDto> getPatientVisits(@PathVariable Long patientId) {
-        return visitService.getPatientVisits(patientId);
+    public PageResponse<VisitDto> getPatientVisits(@PathVariable Long patientId, Pageable pageable) {
+        return PageResponse.of(visitService.getPatientVisits(patientId, pageable));
     }
 }

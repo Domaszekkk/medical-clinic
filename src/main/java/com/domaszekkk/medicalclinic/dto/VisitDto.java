@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class VisitDto {
-    private Long Id;
+    private Long id;
     private LocalDateTime startDateTime;
     private Long doctorId;
     private Long patientId;

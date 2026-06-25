@@ -2,8 +2,11 @@ package com.domaszekkk.medicalclinic.controller;
 
 import com.domaszekkk.medicalclinic.dto.AddDoctorCommand;
 import com.domaszekkk.medicalclinic.dto.DoctorDto;
+import com.domaszekkk.medicalclinic.dto.PageResponse;
 import com.domaszekkk.medicalclinic.service.DoctorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,8 +19,8 @@ public class DoctorController {
     private final DoctorService doctorService;
 
     @GetMapping
-    public List<DoctorDto> getAllDoctors() {
-        return doctorService.getAllDoctors();
+    public PageResponse<DoctorDto> getAllDoctors(Pageable pageable) {
+        return PageResponse.of(doctorService.getAllDoctors(pageable));
     }
 
     @GetMapping("/{id}")
