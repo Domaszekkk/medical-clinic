@@ -5,12 +5,10 @@ import com.domaszekkk.medicalclinic.dto.FacilityDto;
 import com.domaszekkk.medicalclinic.dto.PageResponse;
 import com.domaszekkk.medicalclinic.service.FacilityService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/facilities")

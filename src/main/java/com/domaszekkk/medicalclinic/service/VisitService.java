@@ -74,4 +74,9 @@ public class VisitService {
         return visitJpaRepository.findByPatientId(patientId, pageable)
                 .map(visitMapper::mapToDto);
     }
+
+    public Page<VisitDto> getAvailableVisits(Pageable pageable) {
+        return visitJpaRepository.findByPatientIsNull(pageable)
+                .map(visitMapper::mapToDto);
+    }
 }
