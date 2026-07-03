@@ -26,8 +26,7 @@ public class PatientService {
     private final UserJpaRepository userJpaRepository;
 
     public Page<PatientDto> getAllPatients(Pageable pageable) {
-        return patientJpaRepository.findAll(pageable)
-                .map(patientMapper::mapToDto);
+        return patientJpaRepository.findAll(pageable).map(patientMapper::mapToDto);
     }
 
     public PatientDto addPatient(AddPatientCommand command) {
