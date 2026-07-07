@@ -1,6 +1,8 @@
 package com.domaszekkk.medicalclinic.service;
 
+import com.domaszekkk.medicalclinic.dto.AddPatientCommand;
 import com.domaszekkk.medicalclinic.dto.PatientDto;
+import com.domaszekkk.medicalclinic.dto.UpdatePatientRequest;
 import com.domaszekkk.medicalclinic.entity.Patient;
 import com.domaszekkk.medicalclinic.entity.User;
 import com.domaszekkk.medicalclinic.mapper.PatientMapper;
@@ -17,7 +19,11 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 public class PatientServiceTest {
@@ -29,7 +35,7 @@ public class PatientServiceTest {
     @BeforeEach
     void setup() {
         this.patientJpaRepository = Mockito.mock(PatientJpaRepository.class);
-        this.userJpaRepository = Mockito.mock(UserJpaRepository.class)
+        this.userJpaRepository = Mockito.mock(UserJpaRepository.class);
         this.patientMapper = Mappers.getMapper(PatientMapper.class);
         this.patientService = new PatientService(patientJpaRepository, patientMapper, userJpaRepository);
     }
@@ -80,5 +86,123 @@ public class PatientServiceTest {
         Page<PatientDto> result = patientService.getAllPatients(pageable);
 
         //then - sekcja która służy sprawdzeniu czy rezultat wykonania testu
+        assertAll(
+                () -> assertEquals("firstName", result.getContent().get(0).getFirstName()),
+                () -> assertEquals("lastName", result.getContent().get(0).getLastName()),
+                () -> assertEquals("firstName2", result.getContent().get(1).getFirstName()),
+                () -> assertEquals("lastName2", result.getContent().get(1).getLastName())
+        );
+    }
+
+    @Test
+    void addPatient_DataCorrect_ReturnPatient() {
+        //given
+        User user = User.builder()
+                .id(1L)
+                .email("email")
+                .password("pass")
+                .build();
+
+        AddPatientCommand command = new AddPatientCommand();
+        command.setIdCardNo("ABC123456");
+        command.setFirstName("firstName");
+        command.setLastName("lastName");
+        command.setPhoneNumber("123456789");
+        command.setBirthday(LocalDate.of(1990, 1, 1));
+        command.setUserId(1L);
+
+        Patient savedPatient = Patient.builder()
+                .id(1L)
+                .idCardNo("ABC123456")
+                .firstName("firstName")
+                .lastName("lastName")
+                .phoneNumber("123456789")
+                .birthday(LocalDate.of(1990, 1, 1))
+                .user(user)
+                .build();
+
+        when(userJpaRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(patientJpaRepository.save(any(Patient.class))).thenReturn(savedPatient);
+
+        //when
+        PatientDto result = patientService.addPatient(command);
+
+        //then
+        assertAll(
+                () -> assertEquals("firstName", result.getFirstName()),
+                () -> assertEquals("lastName", result.getLastName()),
+                () -> assertEquals("123456789", result.getPhoneNumber()),
+                () -> assertEquals(1L, result.getUserId())
+        );
+    }
+
+    @Test
+    void getPatientByEmail_DataCorrect_ReturnPatient() {
+        // given
+        User user = User.builder()
+                .id(1L)
+                .email("email")
+                .password("pass")
+                .build();
+        Patient patient = Patient.builder()
+                .id(1L)
+                .idCardNo("ABC123456")
+                .firstName("firstName")
+                .lastName("lastName")
+                .phoneNumber("123456789")
+                .birthday(LocalDate.of(1990, 1, 1))
+                .user(user)
+                .build();
+
+        when(patientJpaRepository.findByUserEmail("email")).thenReturn(Optional.of(patient));
+
+        // when
+        PatientDto result = patientService.getPatientByEmail("email");
+
+        // then
+        assertAll(
+                () -> assertEquals("firstName", result.getFirstName()),
+                () -> assertEquals("lastName", result.getLastName()),
+                () -> assertEquals(1L, result.getUserId())
+        );
+    }
+
+    @Test
+    void updatePatient_DataCorrect_ReturnUpdatedPatient() {
+        // given
+        User user = User.builder()
+                .id(1L)
+                .email("email")
+                .password("pass")
+                .build();
+        Patient existingPatient = Patient.builder()
+                .id(1L)
+                .idCardNo("ABC123456")
+                .firstName("firstName")
+                .lastName("lastName")
+                .phoneNumber("123456789")
+                .birthday(LocalDate.of(1990, 1, 1))
+                .user(user)
+                .build();
+
+        UpdatePatientRequest request = new UpdatePatientRequest();
+        request.setIdCardNo("ZZZ999999");
+        request.setFirstName("updatedFirstName");
+        request.setLastName("updatedLastName");
+        request.setPhoneNumber("111222333");
+        request.setBirthday(LocalDate.of(1991, 2, 2));
+
+        when(patientJpaRepository.findByUserEmail("email")).thenReturn(Optional.of(existingPatient));
+        when(patientJpaRepository.save(any(Patient.class))).thenReturn(existingPatient);
+
+        // when
+        PatientDto result = patientService.updatePatient("email", request);
+
+        // then
+        assertAll(
+                () -> assertEquals("updatedFirstName", result.getFirstName()),
+                () -> assertEquals("updatedLastName", result.getLastName()),
+                () -> assertEquals("111222333", result.getPhoneNumber())
+        );
     }
 }

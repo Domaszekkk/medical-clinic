@@ -1,0 +1,207 @@
+package com.domaszekkk.medicalclinic.service;
+
+import com.domaszekkk.medicalclinic.dto.AddDoctorCommand;
+import com.domaszekkk.medicalclinic.dto.DoctorDto;
+import com.domaszekkk.medicalclinic.entity.Doctor;
+import com.domaszekkk.medicalclinic.entity.Facility;
+import com.domaszekkk.medicalclinic.mapper.DoctorMapper;
+import com.domaszekkk.medicalclinic.repository.DoctorJpaRepository;
+import com.domaszekkk.medicalclinic.repository.FacilityJpaRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
+import org.mockito.Mockito;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+public class DoctorServiceTest {
+
+    private DoctorJpaRepository doctorJpaRepository;
+    private DoctorMapper doctorMapper;
+    private FacilityJpaRepository facilityJpaRepository;
+    private DoctorService doctorService;
+
+    @BeforeEach
+    void setup() {
+        this.doctorJpaRepository = Mockito.mock(DoctorJpaRepository.class);
+        this.doctorMapper = Mappers.getMapper(DoctorMapper.class);
+        this.facilityJpaRepository = Mockito.mock(FacilityJpaRepository.class);
+        this.doctorService = new DoctorService(doctorJpaRepository, doctorMapper, facilityJpaRepository);
+    }
+
+    @Test
+    void getAllDoctors_DataCorrect_ReturnDoctors() {
+        // given
+        Doctor doctor = Doctor.builder()
+                .id(1L)
+                .email("email")
+                .password("pass")
+                .firstName("firstName")
+                .lastName("lastName")
+                .specialization("cardiology")
+                .build();
+
+        Doctor doctor2 = Doctor.builder()
+                .id(2L)
+                .email("email2")
+                .password("pass2")
+                .firstName("firstName2")
+                .lastName("lastName2")
+                .specialization("neurology")
+                .build();
+
+        List<Doctor> doctors = List.of(doctor, doctor2);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Doctor> doctorPage = new PageImpl<>(doctors, pageable, doctors.size());
+        when(doctorJpaRepository.findAll(pageable)).thenReturn(doctorPage);
+
+        // when
+        Page<DoctorDto> result = doctorService.getAllDoctors(pageable);
+
+        // then
+        assertAll(
+                () -> assertEquals("firstName", result.getContent().get(0).getFirstName()),
+                () -> assertEquals("cardiology", result.getContent().get(0).getSpecialization()),
+                () -> assertEquals("firstName2", result.getContent().get(1).getFirstName()),
+                () -> assertEquals("neurology", result.getContent().get(1).getSpecialization())
+        );
+    }
+
+    @Test
+    void addDoctor_DataCorrect_ReturnDoctor() {
+        // given
+        AddDoctorCommand command = new AddDoctorCommand();
+        command.setEmail("email");
+        command.setPassword("pass");
+        command.setFirstName("firstName");
+        command.setLastName("lastName");
+        command.setSpecialization("cardiology");
+
+        Doctor savedDoctor = Doctor.builder()
+                .id(1L)
+                .email("email")
+                .password("pass")
+                .firstName("firstName")
+                .lastName("lastName")
+                .specialization("cardiology")
+                .build();
+
+        when(doctorJpaRepository.save(any(Doctor.class))).thenReturn(savedDoctor);
+
+        // when
+        DoctorDto result = doctorService.addDoctor(command);
+
+        // then
+        assertAll(
+                () -> assertEquals("firstName", result.getFirstName()),
+                () -> assertEquals("lastName", result.getLastName()),
+                () -> assertEquals("cardiology", result.getSpecialization())
+        );
+    }
+
+    @Test
+    void getDoctorById_DataCorrect_ReturnDoctor() {
+        // given
+        Doctor doctor = Doctor.builder()
+                .id(1L)
+                .email("email")
+                .password("pass")
+                .firstName("firstName")
+                .lastName("lastName")
+                .specialization("cardiology")
+                .build();
+
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.of(doctor));
+
+        // when
+        DoctorDto result = doctorService.getDoctorById(1L);
+
+        // then
+        assertAll(
+                () -> assertEquals("firstName", result.getFirstName()),
+                () -> assertEquals("lastName", result.getLastName()),
+                () -> assertEquals("cardiology", result.getSpecialization())
+        );
+    }
+
+    @Test
+    void updateDoctor_DataCorrect_ReturnUpdatedDoctor() {
+        // given
+        Doctor existingDoctor = Doctor.builder()
+                .id(1L)
+                .email("email")
+                .password("pass")
+                .firstName("firstName")
+                .lastName("lastName")
+                .specialization("cardiology")
+                .build();
+
+        AddDoctorCommand command = new AddDoctorCommand();
+        command.setEmail("updatedEmail");
+        command.setPassword("updatedPass");
+        command.setFirstName("updatedFirstName");
+        command.setLastName("updatedLastName");
+        command.setSpecialization("neurology");
+
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.of(existingDoctor));
+        when(doctorJpaRepository.save(any(Doctor.class))).thenReturn(existingDoctor);
+
+        // when
+        DoctorDto result = doctorService.updateDoctor(1L, command);
+
+        // then
+        assertAll(
+                () -> assertEquals("updatedFirstName", result.getFirstName()),
+                () -> assertEquals("updatedLastName", result.getLastName()),
+                () -> assertEquals("neurology", result.getSpecialization())
+        );
+    }
+
+    @Test
+    void assignDoctorToFacility_DataCorrect_ReturnDoctorWithFacility() {
+        // given
+        Facility facility = Facility.builder()
+                .id(1L)
+                .name("facilityName")
+                .city("city")
+                .zipCode("00-000")
+                .street("street")
+                .buildingNumber("1")
+                .build();
+
+        Doctor doctor = Doctor.builder()
+                .id(1L)
+                .email("email")
+                .password("pass")
+                .firstName("firstName")
+                .lastName("lastName")
+                .specialization("cardiology")
+                .facilities(new ArrayList<>())
+                .build();
+
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.of(doctor));
+        when(facilityJpaRepository.findById(1L)).thenReturn(Optional.of(facility));
+        when(doctorJpaRepository.save(any(Doctor.class))).thenReturn(doctor);
+
+        // when
+        DoctorDto result = doctorService.assignDoctorToFacility(1L, 1L);
+
+        // then
+        assertAll(
+                () -> assertEquals("firstName", result.getFirstName()),
+                () -> assertEquals(1, result.getFacilities().size()),
+                () -> assertEquals("facilityName", result.getFacilities().get(0).getName())
+        );
+    }
+}
