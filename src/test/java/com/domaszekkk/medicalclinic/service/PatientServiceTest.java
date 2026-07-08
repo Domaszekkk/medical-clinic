@@ -5,9 +5,12 @@ import com.domaszekkk.medicalclinic.dto.PatientDto;
 import com.domaszekkk.medicalclinic.dto.UpdatePatientRequest;
 import com.domaszekkk.medicalclinic.entity.Patient;
 import com.domaszekkk.medicalclinic.entity.User;
+import com.domaszekkk.medicalclinic.exception.PatientNotFoundException;
+import com.domaszekkk.medicalclinic.exception.UserNotFoundException;
 import com.domaszekkk.medicalclinic.mapper.PatientMapper;
 import com.domaszekkk.medicalclinic.repository.PatientJpaRepository;
 import com.domaszekkk.medicalclinic.repository.UserJpaRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -16,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -87,10 +91,19 @@ public class PatientServiceTest {
 
         //then - sekcja która służy sprawdzeniu czy rezultat wykonania testu
         assertAll(
+                () -> assertEquals(2, result.getContent().size()),
+                () -> assertEquals(1L, result.getContent().get(0).getId()),
                 () -> assertEquals("firstName", result.getContent().get(0).getFirstName()),
                 () -> assertEquals("lastName", result.getContent().get(0).getLastName()),
+                () -> assertEquals("1234565789", result.getContent().get(0).getPhoneNumber()),
+                () -> assertEquals(LocalDate.of(2000, 1, 1), result.getContent().get(0).getBirthday()),
+                () -> assertEquals(1L, result.getContent().get(0).getUserId()),
+                () -> assertEquals(2L, result.getContent().get(1).getId()),
                 () -> assertEquals("firstName2", result.getContent().get(1).getFirstName()),
-                () -> assertEquals("lastName2", result.getContent().get(1).getLastName())
+                () -> assertEquals("lastName2", result.getContent().get(1).getLastName()),
+                () -> assertEquals("987654321", result.getContent().get(1).getPhoneNumber()),
+                () -> assertEquals(LocalDate.of(2000, 2, 2), result.getContent().get(1).getBirthday()),
+                () -> assertEquals(2L, result.getContent().get(1).getUserId())
         );
     }
 
@@ -129,9 +142,11 @@ public class PatientServiceTest {
 
         //then
         assertAll(
+                () -> assertEquals(1L, result.getId()),
                 () -> assertEquals("firstName", result.getFirstName()),
                 () -> assertEquals("lastName", result.getLastName()),
                 () -> assertEquals("123456789", result.getPhoneNumber()),
+                () -> assertEquals(LocalDate.of(1990, 1, 1), result.getBirthday()),
                 () -> assertEquals(1L, result.getUserId())
         );
     }
@@ -161,8 +176,11 @@ public class PatientServiceTest {
 
         // then
         assertAll(
+                () -> assertEquals(1L, result.getId()),
                 () -> assertEquals("firstName", result.getFirstName()),
                 () -> assertEquals("lastName", result.getLastName()),
+                () -> assertEquals("123456789", result.getPhoneNumber()),
+                () -> assertEquals(LocalDate.of(1990, 1, 1), result.getBirthday()),
                 () -> assertEquals(1L, result.getUserId())
         );
     }
@@ -200,9 +218,36 @@ public class PatientServiceTest {
 
         // then
         assertAll(
+                () -> assertEquals(1L, result.getId()),
                 () -> assertEquals("updatedFirstName", result.getFirstName()),
                 () -> assertEquals("updatedLastName", result.getLastName()),
-                () -> assertEquals("111222333", result.getPhoneNumber())
+                () -> assertEquals("111222333", result.getPhoneNumber()),
+                () -> assertEquals(LocalDate.of(1991, 2, 2), result.getBirthday()),
+                () -> assertEquals(1L, result.getUserId())
+        );
+    }
+
+    @Test
+    void addPatient_UserNotFound_ThrowsUserNotFoundException() {
+        //given
+        AddPatientCommand command = new AddPatientCommand();
+        command.setIdCardNo("ABC123456");
+        command.setFirstName("firstName");
+        command.setLastName("lastName");
+        command.setPhoneNumber("123456789");
+
+        command.setBirthday(LocalDate.of(2000, 1 ,1));
+        command.setUserId(1L);
+
+        when(userJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        //when + then
+        UserNotFoundException exception = Assertions.assertThrows(
+                UserNotFoundException.class, () -> patientService.addPatient(command));
+
+        assertAll(
+                () -> assertEquals("User with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
         );
     }
 }

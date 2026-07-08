@@ -62,7 +62,7 @@ public class VisitService {
 
         Patient patient = patientJpaRepository
                 .findById(patientId)
-                .orElseThrow(() -> new PatientNotFoundException(patientId.toString()));
+                .orElseThrow(() -> new PatientNotFoundException(patientId));
 
         VisitValidator.validatePatientRegistration(visit);
 

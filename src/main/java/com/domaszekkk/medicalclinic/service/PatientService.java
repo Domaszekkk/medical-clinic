@@ -16,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -32,7 +31,7 @@ public class PatientService {
     public PatientDto addPatient(AddPatientCommand command) {
         User user = userJpaRepository
                 .findById(command.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(command.getUserId().toString()));
+                .orElseThrow(() -> new UserNotFoundException(command.getUserId()));
         Patient patient = patientMapper.mapToEntity(command);
         patient.setUser(user);
         return patientMapper.mapToDto(patientJpaRepository.save(patient));

@@ -5,6 +5,7 @@ import com.domaszekkk.medicalclinic.dto.DoctorDto;
 import com.domaszekkk.medicalclinic.entity.Doctor;
 import com.domaszekkk.medicalclinic.entity.Facility;
 import com.domaszekkk.medicalclinic.mapper.DoctorMapper;
+import com.domaszekkk.medicalclinic.mapper.FacilityMapper;
 import com.domaszekkk.medicalclinic.repository.DoctorJpaRepository;
 import com.domaszekkk.medicalclinic.repository.FacilityJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +37,12 @@ public class DoctorServiceTest {
     @BeforeEach
     void setup() {
         this.doctorJpaRepository = Mockito.mock(DoctorJpaRepository.class);
-        this.doctorMapper = Mappers.getMapper(DoctorMapper.class);
         this.facilityJpaRepository = Mockito.mock(FacilityJpaRepository.class);
+
+        FacilityMapper facilityMapper = Mappers.getMapper(FacilityMapper.class);
+        this.doctorMapper = Mappers.getMapper(DoctorMapper.class);
+        ReflectionTestUtils.setField(doctorMapper, "facilityMapper", facilityMapper);
+
         this.doctorService = new DoctorService(doctorJpaRepository, doctorMapper, facilityJpaRepository);
     }
 
@@ -71,9 +77,16 @@ public class DoctorServiceTest {
 
         // then
         assertAll(
+                () -> assertEquals(2, result.getContent().size()),
+                () -> assertEquals(1L, result.getContent().get(0).getId()),
+                () -> assertEquals("email", result.getContent().get(0).getEmail()),
                 () -> assertEquals("firstName", result.getContent().get(0).getFirstName()),
+                () -> assertEquals("lastName", result.getContent().get(0).getLastName()),
                 () -> assertEquals("cardiology", result.getContent().get(0).getSpecialization()),
+                () -> assertEquals(2L, result.getContent().get(1).getId()),
+                () -> assertEquals("email2", result.getContent().get(1).getEmail()),
                 () -> assertEquals("firstName2", result.getContent().get(1).getFirstName()),
+                () -> assertEquals("lastName2", result.getContent().get(1).getLastName()),
                 () -> assertEquals("neurology", result.getContent().get(1).getSpecialization())
         );
     }
@@ -104,6 +117,8 @@ public class DoctorServiceTest {
 
         // then
         assertAll(
+                () -> assertEquals(1L, result.getId()),
+                () -> assertEquals("email", result.getEmail()),
                 () -> assertEquals("firstName", result.getFirstName()),
                 () -> assertEquals("lastName", result.getLastName()),
                 () -> assertEquals("cardiology", result.getSpecialization())
@@ -129,6 +144,8 @@ public class DoctorServiceTest {
 
         // then
         assertAll(
+                () -> assertEquals(1L, result.getId()),
+                () -> assertEquals("email", result.getEmail()),
                 () -> assertEquals("firstName", result.getFirstName()),
                 () -> assertEquals("lastName", result.getLastName()),
                 () -> assertEquals("cardiology", result.getSpecialization())
@@ -162,6 +179,8 @@ public class DoctorServiceTest {
 
         // then
         assertAll(
+                () -> assertEquals(1L, result.getId()),
+                () -> assertEquals("updatedEmail", result.getEmail()),
                 () -> assertEquals("updatedFirstName", result.getFirstName()),
                 () -> assertEquals("updatedLastName", result.getLastName()),
                 () -> assertEquals("neurology", result.getSpecialization())
@@ -199,8 +218,13 @@ public class DoctorServiceTest {
 
         // then
         assertAll(
+                () -> assertEquals(1L, result.getId()),
+                () -> assertEquals("email", result.getEmail()),
                 () -> assertEquals("firstName", result.getFirstName()),
+                () -> assertEquals("lastName", result.getLastName()),
+                () -> assertEquals("cardiology", result.getSpecialization()),
                 () -> assertEquals(1, result.getFacilities().size()),
+                () -> assertEquals(1L, result.getFacilities().get(0).getId()),
                 () -> assertEquals("facilityName", result.getFacilities().get(0).getName())
         );
     }
