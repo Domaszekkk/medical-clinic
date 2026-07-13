@@ -3,8 +3,10 @@ package com.domaszekkk.medicalclinic.service;
 import com.domaszekkk.medicalclinic.dto.AddFacilityCommand;
 import com.domaszekkk.medicalclinic.dto.FacilityDto;
 import com.domaszekkk.medicalclinic.entity.Facility;
+import com.domaszekkk.medicalclinic.exception.FacilityNotFoundException;
 import com.domaszekkk.medicalclinic.mapper.FacilityMapper;
 import com.domaszekkk.medicalclinic.repository.FacilityJpaRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +23,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class FacilityServiceTest {
 
@@ -180,5 +183,52 @@ public class FacilityServiceTest {
                 () -> assertEquals("updatedStreet", result.getStreet()),
                 () -> assertEquals("99", result.getBuildingNumber())
         );
+    }
+
+    @Test
+    void getFacilityById_FacilityNotFound_ThrowsFacilityNotFoundException() {
+        //given
+        when(facilityJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        //when
+        FacilityNotFoundException exception = Assertions.assertThrows(
+                FacilityNotFoundException.class, () -> facilityService.getFacilityById(1L));
+
+        //then
+        assertAll(
+                () -> assertEquals("Facility with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void updateFacility_FacilityNotFound_ThrowsFacilityNotFoundException() {
+        //given
+        AddFacilityCommand command = new AddFacilityCommand();
+        command.setName("updatedFacilityName");
+        when(facilityJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        //when
+        FacilityNotFoundException exception = Assertions.assertThrows(
+                FacilityNotFoundException.class, () -> facilityService.updateFacility(1L, command));
+
+        //then
+        assertAll(
+                () -> assertEquals("Facility with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void deleteFacility_DataCorrect_DeletesFacility() {
+        //given
+        Long id = 1L;
+
+        //when
+        facilityService.deleteFacility(id);
+
+        //then
+        verify(facilityJpaRepository).deleteById(id);
+        verifyNoMoreInteractions(facilityJpaRepository);
     }
 }

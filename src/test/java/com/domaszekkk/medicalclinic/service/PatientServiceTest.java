@@ -28,7 +28,7 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class PatientServiceTest {
     private PatientJpaRepository patientJpaRepository;
@@ -235,7 +235,6 @@ public class PatientServiceTest {
         command.setFirstName("firstName");
         command.setLastName("lastName");
         command.setPhoneNumber("123456789");
-
         command.setBirthday(LocalDate.of(2000, 1 ,1));
         command.setUserId(1L);
 
@@ -249,5 +248,90 @@ public class PatientServiceTest {
                 () -> assertEquals("User with id 1 not found", exception.getMessage()),
                 () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
         );
+    }
+
+    @Test
+    void getPatientByEmail_PatientNotFound_ThrowsPatientNotFoundException() {
+        //given
+        when(patientJpaRepository.findByUserEmail("email")).thenReturn(Optional.empty());
+
+        //when
+        PatientNotFoundException exception = Assertions.assertThrows(
+                PatientNotFoundException.class,() -> patientService.getPatientByEmail("email"));
+        //then
+        assertAll(
+                () -> assertEquals("Patient with email email not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void updatePatient_PatientNotFound_ThrowsPatientNotFoundException() {
+        // given
+        UpdatePatientRequest request = new UpdatePatientRequest();
+        request.setFirstName("updatedFirstName");
+        when(patientJpaRepository.findByUserEmail("email")).thenReturn(Optional.empty());
+
+        // when
+        PatientNotFoundException exception = Assertions.assertThrows(
+                PatientNotFoundException.class, () -> patientService.updatePatient("email", request));
+
+        // then
+        assertAll(
+                () -> assertEquals("Patient with email email not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void updatePassword_PatientNotFound_ThrowsPatientNotFoundException() {
+        // given
+        when(patientJpaRepository.findByUserEmail("email")).thenReturn(Optional.empty());
+
+        // when
+        PatientNotFoundException exception = Assertions.assertThrows(
+                PatientNotFoundException.class, () -> patientService.updatePassword("email", "newPassword"));
+
+        // then
+        assertAll(
+                () -> assertEquals("Patient with email email not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void updatePassword_DataCorrect_UpdatesPassword() {
+        //given
+        User user = User.builder()
+                .id(1L)
+                .email("email")
+                .password("oldPassword")
+                .build();
+        Patient patient = Patient.builder()
+                .user(user)
+                .build();
+        when(patientJpaRepository.findByUserEmail("email")).thenReturn(Optional.of(patient));
+
+        //when
+        patientService.updatePassword("email", "newPassword");
+
+        //then
+        assertEquals("newPassword", patient.getUser().getPassword());
+        verify(patientJpaRepository).findByUserEmail("email");
+        verify(patientJpaRepository).save(patient);
+        verifyNoMoreInteractions(patientJpaRepository);
+    }
+
+    @Test
+    void deletePatientByEmail_DataCorrect_DeletesPatient() {
+        // given
+        String email = "email";
+
+        // when
+        patientService.deletePatientByEmail(email);
+
+        // then
+        verify(patientJpaRepository).deleteByUserEmail(email);
+        verifyNoMoreInteractions(patientJpaRepository);
     }
 }

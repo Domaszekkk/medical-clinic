@@ -1,10 +1,13 @@
 package com.domaszekkk.medicalclinic.service;
 
 import com.domaszekkk.medicalclinic.dto.AddUserCommand;
+import com.domaszekkk.medicalclinic.dto.UpdateUserRequest;
 import com.domaszekkk.medicalclinic.dto.UserDto;
 import com.domaszekkk.medicalclinic.entity.User;
+import com.domaszekkk.medicalclinic.exception.UserNotFoundException;
 import com.domaszekkk.medicalclinic.mapper.UserMapper;
 import com.domaszekkk.medicalclinic.repository.UserJpaRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -13,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +24,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class UserServiceTest {
 
@@ -112,5 +116,78 @@ public class UserServiceTest {
                 () -> assertEquals(1L, result.getId()),
                 () -> assertEquals("email", result.getEmail())
         );
+    }
+
+    @Test
+    void getUserByEmail_UserNotFound_ThrowsUserNotFoundException() {
+        // given
+        when(userJpaRepository.findByEmail("email")).thenReturn(Optional.empty());
+
+        // when
+        UserNotFoundException exception = Assertions.assertThrows(
+                UserNotFoundException.class, () -> userService.getUserByEmail("email"));
+
+        // then
+        assertAll(
+                () -> assertEquals("User with email email not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void updateUser_DataCorrect_UpdatesUser() {
+        // given
+        User existingUser = User.builder()
+                .id(1L)
+                .email("email")
+                .password("oldPass")
+                .build();
+
+        UpdateUserRequest request = new UpdateUserRequest("updatedEmail", "updatedPass");
+
+        when(userJpaRepository.findByEmail("email")).thenReturn(Optional.of(existingUser));
+
+        // when
+        userService.updateUser("email", request);
+
+        // then
+        assertAll(
+                () -> assertEquals("updatedEmail", existingUser.getEmail()),
+                () -> assertEquals("updatedPass", existingUser.getPassword())
+        );
+        verify(userJpaRepository).findByEmail("email");
+        verify(userJpaRepository).save(existingUser);
+        verifyNoMoreInteractions(userJpaRepository);
+    }
+
+    @Test
+    void updateUser_UserNotFound_ThrowsUserNotFoundException() {
+        // given
+        UpdateUserRequest request = new UpdateUserRequest("updatedEmail", "updatedPass");
+
+        when(userJpaRepository.findByEmail("email")).thenReturn(Optional.empty());
+
+        // when
+        UserNotFoundException exception = Assertions.assertThrows(
+                UserNotFoundException.class, () -> userService.updateUser("email", request));
+
+        // then
+        assertAll(
+                () -> assertEquals("User with email email not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void deleteUser_DataCorrect_DeletesUser() {
+        // given
+        String email = "email";
+
+        // when
+        userService.deleteUser(email);
+
+        // then
+        verify(userJpaRepository).deleteByEmail(email);
+        verifyNoMoreInteractions(userJpaRepository);
     }
 }

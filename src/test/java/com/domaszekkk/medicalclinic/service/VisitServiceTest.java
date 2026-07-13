@@ -6,11 +6,13 @@ import com.domaszekkk.medicalclinic.entity.Doctor;
 import com.domaszekkk.medicalclinic.entity.Facility;
 import com.domaszekkk.medicalclinic.entity.Patient;
 import com.domaszekkk.medicalclinic.entity.Visit;
+import com.domaszekkk.medicalclinic.exception.*;
 import com.domaszekkk.medicalclinic.mapper.VisitMapper;
 import com.domaszekkk.medicalclinic.repository.DoctorJpaRepository;
 import com.domaszekkk.medicalclinic.repository.FacilityJpaRepository;
 import com.domaszekkk.medicalclinic.repository.PatientJpaRepository;
 import com.domaszekkk.medicalclinic.repository.VisitJpaRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -19,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -309,6 +312,202 @@ public class VisitServiceTest {
                 () -> assertEquals(1L, result.getContent().get(1).getDoctorId()),
                 () -> assertEquals(1L, result.getContent().get(1).getFacilityId()),
                 () -> assertNull(result.getContent().get(1).getPatientId())
+        );
+    }
+
+    @Test
+    void addVisit_DoctorNotFound_ThrowsDoctorNotFoundException() {
+        // given
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusMinutes(15);
+
+        AddVisitCommand command = new AddVisitCommand();
+        command.setStartDateTime(start);
+        command.setEndDateTime(end);
+        command.setFacilityId(1L);
+
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when
+        DoctorNotFoundException exception = Assertions.assertThrows(
+                DoctorNotFoundException.class, () -> visitService.addVisit(1L, command));
+
+        // then
+        assertAll(
+                () -> assertEquals("Doctor with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void addVisit_FacilityNotFound_ThrowsFacilityNotFoundException() {
+        // given
+        Doctor doctor = Doctor.builder()
+                .id(1L)
+                .facilities(new ArrayList<>())
+                .build();
+
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusMinutes(15);
+
+        AddVisitCommand command = new AddVisitCommand();
+        command.setStartDateTime(start);
+        command.setEndDateTime(end);
+        command.setFacilityId(1L);
+
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.of(doctor));
+        when(facilityJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when
+        FacilityNotFoundException exception = Assertions.assertThrows(
+                FacilityNotFoundException.class, () -> visitService.addVisit(1L, command));
+
+        // then
+        assertAll(
+                () -> assertEquals("Facility with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void addVisit_DoctorNotAssignedToFacility_ThrowsDoctorNotAssignedToFacilityException() {
+        // given
+        Facility facility = Facility.builder()
+                .id(1L)
+                .build();
+
+        Doctor doctor = Doctor.builder()
+                .id(1L)
+                .facilities(new ArrayList<>())
+                .build();
+
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusMinutes(15);
+
+        AddVisitCommand command = new AddVisitCommand();
+        command.setStartDateTime(start);
+        command.setEndDateTime(end);
+        command.setFacilityId(1L);
+
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.of(doctor));
+        when(facilityJpaRepository.findById(1L)).thenReturn(Optional.of(facility));
+
+        // when
+        DoctorNotAssignedToFacilityException exception = Assertions.assertThrows(
+                DoctorNotAssignedToFacilityException.class, () -> visitService.addVisit(1L, command));
+
+        // then
+        assertAll(
+                () -> assertEquals("Doctor with id 1 is not assigned to facility with id 1", exception.getMessage()),
+                () -> assertEquals(HttpStatus.CONFLICT, exception.getStatus())
+        );
+    }
+
+    @Test
+    void addVisit_ConflictingVisit_ThrowsDoctorVisitConflictException() {
+        // given
+        Facility facility = Facility.builder()
+                .id(1L)
+                .build();
+
+        Doctor doctor = Doctor.builder()
+                .id(1L)
+                .facilities(new ArrayList<>(List.of(facility)))
+                .build();
+
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusMinutes(15);
+
+        AddVisitCommand command = new AddVisitCommand();
+        command.setStartDateTime(start);
+        command.setEndDateTime(end);
+        command.setFacilityId(1L);
+
+        Visit conflictingVisit = Visit.builder()
+                .id(2L)
+                .startDateTime(start)
+                .endDateTime(end)
+                .build();
+
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.of(doctor));
+        when(facilityJpaRepository.findById(1L)).thenReturn(Optional.of(facility));
+        when(visitJpaRepository.findConflictingVisits(1L, start, end)).thenReturn(List.of(conflictingVisit));
+
+        // when
+        DoctorVisitConflictException exception = Assertions.assertThrows(
+                DoctorVisitConflictException.class, () -> visitService.addVisit(1L, command));
+
+        // then
+        assertAll(
+                () -> assertEquals("Doctor already has a visit at " + start, exception.getMessage()),
+                () -> assertEquals(HttpStatus.CONFLICT, exception.getStatus())
+        );
+    }
+
+    @Test
+    void registerPatientForVisit_VisitNotFound_ThrowsVisitNotFoundException() {
+        // given
+        when(visitJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when
+        VisitNotFoundException exception = Assertions.assertThrows(
+                VisitNotFoundException.class, () -> visitService.registerPatientForVisit(1L, 1L));
+
+        // then
+        assertAll(
+                () -> assertEquals("Visit with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void registerPatientForVisit_PatientNotFound_ThrowsPatientNotFoundException() {
+        // given
+        Visit visit = Visit.builder()
+                .id(1L)
+                .build();
+
+        when(visitJpaRepository.findById(1L)).thenReturn(Optional.of(visit));
+        when(patientJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when
+        PatientNotFoundException exception = Assertions.assertThrows(
+                PatientNotFoundException.class, () -> visitService.registerPatientForVisit(1L, 1L));
+
+        // then
+        assertAll(
+                () -> assertEquals("Patient with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void registerPatientForVisit_VisitAlreadyTaken_ThrowsVisitAlreadyTakenException() {
+        // given
+        Patient existingPatient = Patient.builder()
+                .id(2L)
+                .build();
+
+        Visit visit = Visit.builder()
+                .id(1L)
+                .patient(existingPatient)
+                .build();
+
+        Patient newPatient = Patient.builder()
+                .id(1L)
+                .build();
+
+        when(visitJpaRepository.findById(1L)).thenReturn(Optional.of(visit));
+        when(patientJpaRepository.findById(1L)).thenReturn(Optional.of(newPatient));
+
+        // when
+        VisitAlreadyTakenException exception = Assertions.assertThrows(
+                VisitAlreadyTakenException.class, () -> visitService.registerPatientForVisit(1L, 1L));
+
+        // then
+        assertAll(
+                () -> assertEquals("visit with id 1 is already taken", exception.getMessage()),
+                () -> assertEquals(HttpStatus.CONFLICT, exception.getStatus())
         );
     }
 }

@@ -4,10 +4,14 @@ import com.domaszekkk.medicalclinic.dto.AddDoctorCommand;
 import com.domaszekkk.medicalclinic.dto.DoctorDto;
 import com.domaszekkk.medicalclinic.entity.Doctor;
 import com.domaszekkk.medicalclinic.entity.Facility;
+import com.domaszekkk.medicalclinic.exception.DoctorAlreadyAssignedToFacilityException;
+import com.domaszekkk.medicalclinic.exception.DoctorNotFoundException;
+import com.domaszekkk.medicalclinic.exception.FacilityNotFoundException;
 import com.domaszekkk.medicalclinic.mapper.DoctorMapper;
 import com.domaszekkk.medicalclinic.mapper.FacilityMapper;
 import com.domaszekkk.medicalclinic.repository.DoctorJpaRepository;
 import com.domaszekkk.medicalclinic.repository.FacilityJpaRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -16,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
@@ -25,7 +30,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class DoctorServiceTest {
 
@@ -38,11 +43,9 @@ public class DoctorServiceTest {
     void setup() {
         this.doctorJpaRepository = Mockito.mock(DoctorJpaRepository.class);
         this.facilityJpaRepository = Mockito.mock(FacilityJpaRepository.class);
-
         FacilityMapper facilityMapper = Mappers.getMapper(FacilityMapper.class);
         this.doctorMapper = Mappers.getMapper(DoctorMapper.class);
         ReflectionTestUtils.setField(doctorMapper, "facilityMapper", facilityMapper);
-
         this.doctorService = new DoctorService(doctorJpaRepository, doctorMapper, facilityJpaRepository);
     }
 
@@ -227,5 +230,115 @@ public class DoctorServiceTest {
                 () -> assertEquals(1L, result.getFacilities().get(0).getId()),
                 () -> assertEquals("facilityName", result.getFacilities().get(0).getName())
         );
+    }
+
+    @Test
+    void getDoctorById_DoctorNotFound_ThrowsDoctorNotFoundException() {
+        // given
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when
+        DoctorNotFoundException exception = Assertions.assertThrows(
+                DoctorNotFoundException.class, () -> doctorService.getDoctorById(1L));
+        // then
+        assertAll(
+                () -> assertEquals("Doctor with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void updateDoctor_DoctorNotFound_ThrowsDoctorNotFoundException() {
+        // given
+        AddDoctorCommand command = new AddDoctorCommand();
+        command.setFirstName("updatedFirstName");
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when
+        DoctorNotFoundException exception = Assertions.assertThrows(
+                DoctorNotFoundException.class, () -> doctorService.updateDoctor(1L, command));
+
+        // then
+        assertAll(
+                () -> assertEquals("Doctor with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void assignDoctorToFacility_DoctorNotFound_ThrowsDoctorNotFoundException() {
+        // given
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when
+        DoctorNotFoundException exception = Assertions.assertThrows(
+                DoctorNotFoundException.class, () -> doctorService.assignDoctorToFacility(1L, 1L));
+
+        // then
+        assertAll(
+                () -> assertEquals("Doctor with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void assignDoctorToFacility_FacilityNotFound_ThrowsFacilityNotFoundException() {
+        // given
+        Doctor doctor = Doctor.builder()
+                .id(1L)
+                .facilities(new ArrayList<>())
+                .build();
+
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.of(doctor));
+        when(facilityJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when
+        FacilityNotFoundException exception = Assertions.assertThrows(
+                FacilityNotFoundException.class, () -> doctorService.assignDoctorToFacility(1L, 1L));
+
+        // then
+        assertAll(
+                () -> assertEquals("Facility with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+    }
+
+    @Test
+    void assignDoctorToFacility_AlreadyAssigned_ThrowsDoctorAlreadyAssignedToFacilityException() {
+        // given
+        Facility facility = Facility.builder()
+                .id(1L)
+                .build();
+
+        Doctor doctor = Doctor.builder()
+                .id(1L)
+                .facilities(new ArrayList<>(List.of(facility)))
+                .build();
+
+        when(doctorJpaRepository.findById(1L)).thenReturn(Optional.of(doctor));
+        when(facilityJpaRepository.findById(1L)).thenReturn(Optional.of(facility));
+
+        // when
+        DoctorAlreadyAssignedToFacilityException exception = Assertions.assertThrows(
+                DoctorAlreadyAssignedToFacilityException.class, () -> doctorService.assignDoctorToFacility(1L, 1L));
+
+        // then
+        assertAll(
+                () -> assertEquals("Doctor with id 1 is already assigned to facility with id 1", exception.getMessage()),
+                () -> assertEquals(HttpStatus.CONFLICT, exception.getStatus())
+        );
+    }
+
+    @Test
+    void deleteDoctor_DataCorrect_DeletesDoctor() {
+        // given
+        Long id = 1L;
+
+        // when
+        doctorService.deleteDoctor(id);
+
+        // then
+        verify(doctorJpaRepository).deleteById(id);
+        verifyNoMoreInteractions(doctorJpaRepository);
     }
 }
