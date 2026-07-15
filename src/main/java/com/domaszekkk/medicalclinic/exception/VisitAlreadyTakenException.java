@@ -4,6 +4,6 @@ import org.springframework.http.HttpStatus;
 
 public class VisitAlreadyTakenException extends MedicalClinicException {
     public VisitAlreadyTakenException(Long visitId) {
-        super("visit with id " + visitId + " is already taken", HttpStatus.CONFLICT);
+        super("Visit with id " + visitId + " is already taken", HttpStatus.CONFLICT);
     }
 }

@@ -10,9 +10,9 @@ import java.util.List;
 @Builder
 public class DoctorDto {
     private Long id;
-    private String email;
     private String firstName;
     private String lastName;
     private String specialization;
+    private Long userId;
     private List<FacilityDto> facilities;
 }

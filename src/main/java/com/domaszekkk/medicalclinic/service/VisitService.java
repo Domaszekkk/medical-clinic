@@ -71,6 +71,9 @@ public class VisitService {
     }
 
     public Page<VisitDto> getPatientVisits(Long patientId, Pageable pageable) {
+        if (!patientJpaRepository.existsById(patientId)) {
+            throw new PatientNotFoundException(patientId);
+        }
         return visitJpaRepository.findByPatientId(patientId, pageable)
                 .map(visitMapper::mapToDto);
     }

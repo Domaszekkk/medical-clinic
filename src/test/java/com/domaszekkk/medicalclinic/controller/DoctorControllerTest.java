@@ -2,6 +2,7 @@ package com.domaszekkk.medicalclinic.controller;
 
 import com.domaszekkk.medicalclinic.dto.AddDoctorCommand;
 import com.domaszekkk.medicalclinic.dto.DoctorDto;
+import com.domaszekkk.medicalclinic.dto.UpdateDoctorRequest;
 import com.domaszekkk.medicalclinic.dto.FacilityDto;
 import com.domaszekkk.medicalclinic.exception.DoctorNotFoundException;
 import com.domaszekkk.medicalclinic.exception.FacilityNotFoundException;
@@ -44,7 +45,7 @@ class DoctorControllerTest {
         // given
         DoctorDto doctor = DoctorDto.builder()
                 .id(1L)
-                .email("email")
+                .userId(1L)
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
@@ -53,7 +54,7 @@ class DoctorControllerTest {
 
         DoctorDto doctor2 = DoctorDto.builder()
                 .id(2L)
-                .email("email2")
+                .userId(2L)
                 .firstName("firstName2")
                 .lastName("lastName2")
                 .specialization("neurology")
@@ -78,7 +79,7 @@ class DoctorControllerTest {
         // given
         DoctorDto doctor = DoctorDto.builder()
                 .id(1L)
-                .email("email")
+                .userId(1L)
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
@@ -91,7 +92,7 @@ class DoctorControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/doctors/{id}", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.email").value("email"))
+                .andExpect(jsonPath("$.userId").value(1))
                 .andExpect(jsonPath("$.specialization").value("cardiology"));
     }
 
@@ -110,16 +111,15 @@ class DoctorControllerTest {
     void addDoctor_DataCorrect_ReturnsCreatedDoctor() throws Exception {
         // given
         AddDoctorCommand command = AddDoctorCommand.builder()
-                .email("email")
-                .password("pass")
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
+                .userId(1L)
                 .build();
 
         DoctorDto savedDoctor = DoctorDto.builder()
                 .id(1L)
-                .email("email")
+                .userId(1L)
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
@@ -134,16 +134,14 @@ class DoctorControllerTest {
                         .content(objectMapper.writeValueAsString(command)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.email").value("email"))
+                .andExpect(jsonPath("$.userId").value(1))
                 .andExpect(jsonPath("$.specialization").value("cardiology"));
     }
 
     @Test
     void updateDoctor_DataCorrect_ReturnsUpdatedDoctor() throws Exception {
         // given
-        AddDoctorCommand command = AddDoctorCommand.builder()
-                .email("updatedEmail")
-                .password("pass")
+        UpdateDoctorRequest request = UpdateDoctorRequest.builder()
                 .firstName("updatedFirstName")
                 .lastName("updatedLastName")
                 .specialization("neurology")
@@ -151,21 +149,21 @@ class DoctorControllerTest {
 
         DoctorDto updatedDoctor = DoctorDto.builder()
                 .id(1L)
-                .email("updatedEmail")
+                .userId(1L)
                 .firstName("updatedFirstName")
                 .lastName("updatedLastName")
                 .specialization("neurology")
                 .facilities(Collections.emptyList())
                 .build();
 
-        when(doctorService.updateDoctor(eq(1L), any(AddDoctorCommand.class))).thenReturn(updatedDoctor);
+        when(doctorService.updateDoctor(eq(1L), any(UpdateDoctorRequest.class))).thenReturn(updatedDoctor);
 
         // when + then
         mockMvc.perform(MockMvcRequestBuilders.put("/doctors/{id}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(command)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("updatedEmail"))
+                .andExpect(jsonPath("$.firstName").value("updatedFirstName"))
                 .andExpect(jsonPath("$.specialization").value("neurology"));
     }
 
@@ -192,7 +190,7 @@ class DoctorControllerTest {
 
         DoctorDto doctor = DoctorDto.builder()
                 .id(1L)
-                .email("email")
+                .userId(1L)
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")

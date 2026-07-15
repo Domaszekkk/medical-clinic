@@ -3,6 +3,7 @@ package com.domaszekkk.medicalclinic.controller;
 import com.domaszekkk.medicalclinic.dto.AddDoctorCommand;
 import com.domaszekkk.medicalclinic.dto.DoctorDto;
 import com.domaszekkk.medicalclinic.dto.PageResponse;
+import com.domaszekkk.medicalclinic.dto.UpdateDoctorRequest;
 import com.domaszekkk.medicalclinic.service.DoctorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -53,8 +54,8 @@ public class DoctorController {
             @ApiResponse(responseCode = "404", description = "Doctor not found")
     })
     @PutMapping("/{id}")
-    public DoctorDto updateDoctor(@Parameter(description = "Id of the doctor to update") @PathVariable Long id, @RequestBody AddDoctorCommand command) {
-        return doctorService.updateDoctor(id, command);
+    public DoctorDto updateDoctor(@Parameter(description = "Id of the doctor to update") @PathVariable Long id, @RequestBody UpdateDoctorRequest request) {
+        return doctorService.updateDoctor(id, request);
     }
 
     @Operation(summary = "Delete doctor", description = "Deletes a doctor by id")

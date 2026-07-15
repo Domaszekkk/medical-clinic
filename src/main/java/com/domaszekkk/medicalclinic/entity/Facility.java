@@ -3,6 +3,7 @@ package com.domaszekkk.medicalclinic.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -25,7 +26,8 @@ public class Facility {
     private String buildingNumber;
 
     @ManyToMany(mappedBy = "facilities")
-    private List<Doctor> doctors;
+    @Builder.Default
+    private List<Doctor> doctors = new ArrayList<>();
 
     public void update(Facility updatedFacility) {
         this.name = updatedFacility.getName();
