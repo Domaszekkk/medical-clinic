@@ -7,6 +7,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class DoctorDto {
     private Long id;
     private String email;
