@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class VisitServiceTest {
 
@@ -68,8 +68,6 @@ public class VisitServiceTest {
 
         Doctor doctor = Doctor.builder()
                 .id(1L)
-                .email("email")
-                .password("pass")
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
@@ -125,8 +123,6 @@ public class VisitServiceTest {
 
         Doctor doctor = Doctor.builder()
                 .id(1L)
-                .email("email")
-                .password("pass")
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
@@ -183,8 +179,6 @@ public class VisitServiceTest {
 
         Doctor doctor = Doctor.builder()
                 .id(1L)
-                .email("email")
-                .password("pass")
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
@@ -224,6 +218,7 @@ public class VisitServiceTest {
         List<Visit> visits = List.of(visit, visit2);
         Pageable pageable = PageRequest.of(0, 10);
         Page<Visit> visitPage = new PageImpl<>(visits, pageable, visits.size());
+        when(patientJpaRepository.existsById(1L)).thenReturn(true);
         when(visitJpaRepository.findByPatientId(1L, pageable)).thenReturn(visitPage);
 
         // when
@@ -261,8 +256,6 @@ public class VisitServiceTest {
 
         Doctor doctor = Doctor.builder()
                 .id(1L)
-                .email("email")
-                .password("pass")
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
@@ -506,8 +499,25 @@ public class VisitServiceTest {
 
         // then
         assertAll(
-                () -> assertEquals("visit with id 1 is already taken", exception.getMessage()),
+                () -> assertEquals("Visit with id 1 is already taken", exception.getMessage()),
                 () -> assertEquals(HttpStatus.CONFLICT, exception.getStatus())
         );
+    }
+
+    @Test
+    void getPatientVisits_PatientNotFound_ThrowsPatientNotFoundException() {
+        // given
+        Pageable pageable = PageRequest.of(0, 10);
+        when(patientJpaRepository.existsById(1L)).thenReturn(false);
+
+        // when + then
+        PatientNotFoundException exception = Assertions.assertThrows(
+                PatientNotFoundException.class, () -> visitService.getPatientVisits(1L, pageable));
+
+        assertAll(
+                () -> assertEquals("Patient with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+        verify(visitJpaRepository, never()).findByPatientId(any(), any());
     }
 }

@@ -2,14 +2,18 @@ package com.domaszekkk.medicalclinic.service;
 
 import com.domaszekkk.medicalclinic.dto.AddDoctorCommand;
 import com.domaszekkk.medicalclinic.dto.DoctorDto;
+import com.domaszekkk.medicalclinic.dto.UpdateDoctorRequest;
 import com.domaszekkk.medicalclinic.entity.Doctor;
 import com.domaszekkk.medicalclinic.entity.Facility;
+import com.domaszekkk.medicalclinic.entity.User;
 import com.domaszekkk.medicalclinic.exception.DoctorAlreadyAssignedToFacilityException;
 import com.domaszekkk.medicalclinic.exception.DoctorNotFoundException;
 import com.domaszekkk.medicalclinic.exception.FacilityNotFoundException;
+import com.domaszekkk.medicalclinic.exception.UserNotFoundException;
 import com.domaszekkk.medicalclinic.mapper.DoctorMapper;
 import com.domaszekkk.medicalclinic.repository.DoctorJpaRepository;
 import com.domaszekkk.medicalclinic.repository.FacilityJpaRepository;
+import com.domaszekkk.medicalclinic.repository.UserJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,13 +27,18 @@ public class DoctorService {
     private final DoctorJpaRepository doctorJpaRepository;
     private final DoctorMapper doctorMapper;
     private final FacilityJpaRepository facilityJpaRepository;
+    private final UserJpaRepository userJpaRepository;
 
     public Page<DoctorDto> getAllDoctors(Pageable pageable) {
         return doctorJpaRepository.findAll(pageable).map(doctorMapper::mapToDto);
     }
 
     public DoctorDto addDoctor(AddDoctorCommand command) {
+        User user = userJpaRepository
+                .findById(command.getUserId())
+                .orElseThrow(() -> new UserNotFoundException(command.getUserId()));
         Doctor doctor = doctorMapper.mapToEntity(command);
+        doctor.setUser(user);
         return doctorMapper.mapToDto(doctorJpaRepository.save(doctor));
     }
 
@@ -40,16 +49,19 @@ public class DoctorService {
         return doctorMapper.mapToDto(doctor);
     }
 
-    public DoctorDto updateDoctor(Long id, AddDoctorCommand command) {
+    public DoctorDto updateDoctor(Long id, UpdateDoctorRequest request) {
         Doctor doctor = doctorJpaRepository
                 .findById(id)
                 .orElseThrow(() -> new DoctorNotFoundException(id));
-        doctor.update(doctorMapper.mapToEntity(command));
+        doctorMapper.updateDoctorFromRequest(request, doctor);
         return doctorMapper.mapToDto(doctorJpaRepository.save(doctor));
     }
 
     @Transactional
     public void deleteDoctor(Long id) {
+        if (!doctorJpaRepository.existsById(id)) {
+            throw new DoctorNotFoundException(id);
+        }
         doctorJpaRepository.deleteById(id);
     }
 
@@ -61,9 +73,7 @@ public class DoctorService {
         Facility facility = facilityJpaRepository
                 .findById(facilityId)
                 .orElseThrow(() -> new FacilityNotFoundException(facilityId));
-
         validateFacilityNotAlreadyAssigned(doctor, facilityId);
-
         doctor.getFacilities().add(facility);
         return doctorMapper.mapToDto(doctorJpaRepository.save(doctor));
     }

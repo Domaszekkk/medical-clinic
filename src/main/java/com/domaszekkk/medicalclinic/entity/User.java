@@ -3,6 +3,7 @@ package com.domaszekkk.medicalclinic.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -19,8 +20,14 @@ public class User {
     @Column(unique = true)
     private String email;
     private String password;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Patient> patients;
+    @Builder.Default
+    private List<Patient> patients = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Doctor> doctors = new ArrayList<>();
 
     public void update(User updatedUser) {
         this.email = updatedUser.getEmail();

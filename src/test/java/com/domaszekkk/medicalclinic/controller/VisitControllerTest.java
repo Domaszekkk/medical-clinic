@@ -168,7 +168,7 @@ class VisitControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.patch("/visits/{visitId}", 1L)
                         .param("patientId", "5"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("visit with id 1 is already taken"));
+                .andExpect(jsonPath("$.message").value("Visit with id 1 is already taken"));
     }
 
     @Test

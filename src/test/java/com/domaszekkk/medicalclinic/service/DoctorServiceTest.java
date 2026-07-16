@@ -2,15 +2,19 @@ package com.domaszekkk.medicalclinic.service;
 
 import com.domaszekkk.medicalclinic.dto.AddDoctorCommand;
 import com.domaszekkk.medicalclinic.dto.DoctorDto;
+import com.domaszekkk.medicalclinic.dto.UpdateDoctorRequest;
 import com.domaszekkk.medicalclinic.entity.Doctor;
 import com.domaszekkk.medicalclinic.entity.Facility;
+import com.domaszekkk.medicalclinic.entity.User;
 import com.domaszekkk.medicalclinic.exception.DoctorAlreadyAssignedToFacilityException;
 import com.domaszekkk.medicalclinic.exception.DoctorNotFoundException;
 import com.domaszekkk.medicalclinic.exception.FacilityNotFoundException;
+import com.domaszekkk.medicalclinic.exception.UserNotFoundException;
 import com.domaszekkk.medicalclinic.mapper.DoctorMapper;
 import com.domaszekkk.medicalclinic.mapper.FacilityMapper;
 import com.domaszekkk.medicalclinic.repository.DoctorJpaRepository;
 import com.domaszekkk.medicalclinic.repository.FacilityJpaRepository;
+import com.domaszekkk.medicalclinic.repository.UserJpaRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,37 +41,49 @@ public class DoctorServiceTest {
     private DoctorJpaRepository doctorJpaRepository;
     private DoctorMapper doctorMapper;
     private FacilityJpaRepository facilityJpaRepository;
+    private UserJpaRepository userJpaRepository;
     private DoctorService doctorService;
 
     @BeforeEach
     void setup() {
         this.doctorJpaRepository = Mockito.mock(DoctorJpaRepository.class);
         this.facilityJpaRepository = Mockito.mock(FacilityJpaRepository.class);
+        this.userJpaRepository = Mockito.mock(UserJpaRepository.class);
         FacilityMapper facilityMapper = Mappers.getMapper(FacilityMapper.class);
         this.doctorMapper = Mappers.getMapper(DoctorMapper.class);
         ReflectionTestUtils.setField(doctorMapper, "facilityMapper", facilityMapper);
-        this.doctorService = new DoctorService(doctorJpaRepository, doctorMapper, facilityJpaRepository);
+        this.doctorService = new DoctorService(doctorJpaRepository, doctorMapper, facilityJpaRepository, userJpaRepository);
     }
 
     @Test
     void getAllDoctors_DataCorrect_ReturnDoctors() {
         // given
-        Doctor doctor = Doctor.builder()
+        User user = User.builder()
                 .id(1L)
                 .email("email")
                 .password("pass")
+                .build();
+
+        User user2 = User.builder()
+                .id(2L)
+                .email("email2")
+                .password("pass2")
+                .build();
+
+        Doctor doctor = Doctor.builder()
+                .id(1L)
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
+                .user(user)
                 .build();
 
         Doctor doctor2 = Doctor.builder()
                 .id(2L)
-                .email("email2")
-                .password("pass2")
                 .firstName("firstName2")
                 .lastName("lastName2")
                 .specialization("neurology")
+                .user(user2)
                 .build();
 
         List<Doctor> doctors = List.of(doctor, doctor2);
@@ -82,12 +98,12 @@ public class DoctorServiceTest {
         assertAll(
                 () -> assertEquals(2, result.getContent().size()),
                 () -> assertEquals(1L, result.getContent().get(0).getId()),
-                () -> assertEquals("email", result.getContent().get(0).getEmail()),
+                () -> assertEquals(1L, result.getContent().get(0).getUserId()),
                 () -> assertEquals("firstName", result.getContent().get(0).getFirstName()),
                 () -> assertEquals("lastName", result.getContent().get(0).getLastName()),
                 () -> assertEquals("cardiology", result.getContent().get(0).getSpecialization()),
                 () -> assertEquals(2L, result.getContent().get(1).getId()),
-                () -> assertEquals("email2", result.getContent().get(1).getEmail()),
+                () -> assertEquals(2L, result.getContent().get(1).getUserId()),
                 () -> assertEquals("firstName2", result.getContent().get(1).getFirstName()),
                 () -> assertEquals("lastName2", result.getContent().get(1).getLastName()),
                 () -> assertEquals("neurology", result.getContent().get(1).getSpecialization())
@@ -97,22 +113,27 @@ public class DoctorServiceTest {
     @Test
     void addDoctor_DataCorrect_ReturnDoctor() {
         // given
-        AddDoctorCommand command = new AddDoctorCommand();
-        command.setEmail("email");
-        command.setPassword("pass");
-        command.setFirstName("firstName");
-        command.setLastName("lastName");
-        command.setSpecialization("cardiology");
-
-        Doctor savedDoctor = Doctor.builder()
+        User user = User.builder()
                 .id(1L)
                 .email("email")
                 .password("pass")
+                .build();
+
+        AddDoctorCommand command = new AddDoctorCommand();
+        command.setFirstName("firstName");
+        command.setLastName("lastName");
+        command.setSpecialization("cardiology");
+        command.setUserId(1L);
+
+        Doctor savedDoctor = Doctor.builder()
+                .id(1L)
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
+                .user(user)
                 .build();
 
+        when(userJpaRepository.findById(1L)).thenReturn(Optional.of(user));
         when(doctorJpaRepository.save(any(Doctor.class))).thenReturn(savedDoctor);
 
         // when
@@ -121,7 +142,7 @@ public class DoctorServiceTest {
         // then
         assertAll(
                 () -> assertEquals(1L, result.getId()),
-                () -> assertEquals("email", result.getEmail()),
+                () -> assertEquals(1L, result.getUserId()),
                 () -> assertEquals("firstName", result.getFirstName()),
                 () -> assertEquals("lastName", result.getLastName()),
                 () -> assertEquals("cardiology", result.getSpecialization())
@@ -129,15 +150,39 @@ public class DoctorServiceTest {
     }
 
     @Test
+    void addDoctor_UserNotFound_ThrowsUserNotFoundException() {
+        // given
+        AddDoctorCommand command = new AddDoctorCommand();
+        command.setFirstName("firstName");
+        command.setUserId(1L);
+        when(userJpaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when + then
+        UserNotFoundException exception = Assertions.assertThrows(
+                UserNotFoundException.class, () -> doctorService.addDoctor(command));
+
+        assertAll(
+                () -> assertEquals("User with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+        verify(doctorJpaRepository, never()).save(any());
+    }
+
+    @Test
     void getDoctorById_DataCorrect_ReturnDoctor() {
         // given
-        Doctor doctor = Doctor.builder()
+        User user = User.builder()
                 .id(1L)
                 .email("email")
                 .password("pass")
+                .build();
+
+        Doctor doctor = Doctor.builder()
+                .id(1L)
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
+                .user(user)
                 .build();
 
         when(doctorJpaRepository.findById(1L)).thenReturn(Optional.of(doctor));
@@ -148,7 +193,7 @@ public class DoctorServiceTest {
         // then
         assertAll(
                 () -> assertEquals(1L, result.getId()),
-                () -> assertEquals("email", result.getEmail()),
+                () -> assertEquals(1L, result.getUserId()),
                 () -> assertEquals("firstName", result.getFirstName()),
                 () -> assertEquals("lastName", result.getLastName()),
                 () -> assertEquals("cardiology", result.getSpecialization())
@@ -158,35 +203,38 @@ public class DoctorServiceTest {
     @Test
     void updateDoctor_DataCorrect_ReturnUpdatedDoctor() {
         // given
-        Doctor existingDoctor = Doctor.builder()
+        User user = User.builder()
                 .id(1L)
                 .email("email")
                 .password("pass")
+                .build();
+
+        Doctor existingDoctor = Doctor.builder()
+                .id(1L)
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
+                .user(user)
                 .build();
 
-        AddDoctorCommand command = new AddDoctorCommand();
-        command.setEmail("updatedEmail");
-        command.setPassword("updatedPass");
-        command.setFirstName("updatedFirstName");
-        command.setLastName("updatedLastName");
-        command.setSpecialization("neurology");
+        UpdateDoctorRequest request = new UpdateDoctorRequest();
+        request.setFirstName("updatedFirstName");
+        request.setLastName("updatedLastName");
+        request.setSpecialization("neurology");
 
         when(doctorJpaRepository.findById(1L)).thenReturn(Optional.of(existingDoctor));
         when(doctorJpaRepository.save(any(Doctor.class))).thenReturn(existingDoctor);
 
         // when
-        DoctorDto result = doctorService.updateDoctor(1L, command);
+        DoctorDto result = doctorService.updateDoctor(1L, request);
 
         // then
         assertAll(
                 () -> assertEquals(1L, result.getId()),
-                () -> assertEquals("updatedEmail", result.getEmail()),
                 () -> assertEquals("updatedFirstName", result.getFirstName()),
                 () -> assertEquals("updatedLastName", result.getLastName()),
-                () -> assertEquals("neurology", result.getSpecialization())
+                () -> assertEquals("neurology", result.getSpecialization()),
+                () -> assertEquals(1L, existingDoctor.getUser().getId())
         );
     }
 
@@ -202,13 +250,18 @@ public class DoctorServiceTest {
                 .buildingNumber("1")
                 .build();
 
-        Doctor doctor = Doctor.builder()
+        User user = User.builder()
                 .id(1L)
                 .email("email")
                 .password("pass")
+                .build();
+
+        Doctor doctor = Doctor.builder()
+                .id(1L)
                 .firstName("firstName")
                 .lastName("lastName")
                 .specialization("cardiology")
+                .user(user)
                 .facilities(new ArrayList<>())
                 .build();
 
@@ -222,7 +275,6 @@ public class DoctorServiceTest {
         // then
         assertAll(
                 () -> assertEquals(1L, result.getId()),
-                () -> assertEquals("email", result.getEmail()),
                 () -> assertEquals("firstName", result.getFirstName()),
                 () -> assertEquals("lastName", result.getLastName()),
                 () -> assertEquals("cardiology", result.getSpecialization()),
@@ -250,13 +302,13 @@ public class DoctorServiceTest {
     @Test
     void updateDoctor_DoctorNotFound_ThrowsDoctorNotFoundException() {
         // given
-        AddDoctorCommand command = new AddDoctorCommand();
-        command.setFirstName("updatedFirstName");
+        UpdateDoctorRequest request = new UpdateDoctorRequest();
+        request.setFirstName("updatedFirstName");
         when(doctorJpaRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when
         DoctorNotFoundException exception = Assertions.assertThrows(
-                DoctorNotFoundException.class, () -> doctorService.updateDoctor(1L, command));
+                DoctorNotFoundException.class, () -> doctorService.updateDoctor(1L, request));
 
         // then
         assertAll(
@@ -333,12 +385,31 @@ public class DoctorServiceTest {
     void deleteDoctor_DataCorrect_DeletesDoctor() {
         // given
         Long id = 1L;
+        when(doctorJpaRepository.existsById(id)).thenReturn(true);
 
         // when
         doctorService.deleteDoctor(id);
 
         // then
+        verify(doctorJpaRepository).existsById(id);
         verify(doctorJpaRepository).deleteById(id);
         verifyNoMoreInteractions(doctorJpaRepository);
+    }
+
+    @Test
+    void deleteDoctor_DoctorNotFound_ThrowsDoctorNotFoundException() {
+        // given
+        Long id = 1L;
+        when(doctorJpaRepository.existsById(id)).thenReturn(false);
+
+        // when + then
+        DoctorNotFoundException exception = Assertions.assertThrows(
+                DoctorNotFoundException.class, () -> doctorService.deleteDoctor(id));
+
+        assertAll(
+                () -> assertEquals("Doctor with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+        verify(doctorJpaRepository, never()).deleteById(any());
     }
 }

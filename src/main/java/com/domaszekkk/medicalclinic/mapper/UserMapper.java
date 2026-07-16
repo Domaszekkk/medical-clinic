@@ -14,9 +14,11 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "patients", ignore = true)
+    @Mapping(target = "doctors", ignore = true)
     User mapToEntity(AddUserCommand request);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "patients", ignore = true)
+    @Mapping(target = "doctors", ignore = true)
     User mapToEntity(UpdateUserRequest request);
 }

@@ -223,12 +223,31 @@ public class FacilityServiceTest {
     void deleteFacility_DataCorrect_DeletesFacility() {
         //given
         Long id = 1L;
+        when(facilityJpaRepository.existsById(id)).thenReturn(true);
 
         //when
         facilityService.deleteFacility(id);
 
         //then
+        verify(facilityJpaRepository).existsById(id);
         verify(facilityJpaRepository).deleteById(id);
         verifyNoMoreInteractions(facilityJpaRepository);
+    }
+
+    @Test
+    void deleteFacility_FacilityNotFound_ThrowsFacilityNotFoundException() {
+        //given
+        Long id = 1L;
+        when(facilityJpaRepository.existsById(id)).thenReturn(false);
+
+        //when + then
+        FacilityNotFoundException exception = Assertions.assertThrows(
+                FacilityNotFoundException.class, () -> facilityService.deleteFacility(id));
+
+        assertAll(
+                () -> assertEquals("Facility with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+        verify(facilityJpaRepository, never()).deleteById(any());
     }
 }
