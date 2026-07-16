@@ -4,6 +4,7 @@ import com.domaszekkk.medicalclinic.dto.AddDoctorCommand;
 import com.domaszekkk.medicalclinic.dto.DoctorDto;
 import com.domaszekkk.medicalclinic.entity.Doctor;
 import com.domaszekkk.medicalclinic.entity.Facility;
+import com.domaszekkk.medicalclinic.exception.DoctorAlreadyAssignedToFacilityException;
 import com.domaszekkk.medicalclinic.exception.DoctorNotFoundException;
 import com.domaszekkk.medicalclinic.exception.FacilityNotFoundException;
 import com.domaszekkk.medicalclinic.mapper.DoctorMapper;
@@ -61,7 +62,18 @@ public class DoctorService {
         Facility facility = facilityJpaRepository
                 .findById(facilityId)
                 .orElseThrow(() -> new FacilityNotFoundException(facilityId));
+
+        validateFacilityNotAlreadyAssigned(doctor, facilityId);
+
         doctor.getFacilities().add(facility);
         return doctorMapper.mapToDto(doctorJpaRepository.save(doctor));
+    }
+
+    private void validateFacilityNotAlreadyAssigned(Doctor doctor, Long facilityId) {
+        boolean isAlreadyAssigned = doctor.getFacilities().stream()
+                .anyMatch(assignedFacility -> assignedFacility.getId().equals(facilityId));
+        if (isAlreadyAssigned) {
+            throw new DoctorAlreadyAssignedToFacilityException(doctor.getId(), facilityId);
+        }
     }
 }

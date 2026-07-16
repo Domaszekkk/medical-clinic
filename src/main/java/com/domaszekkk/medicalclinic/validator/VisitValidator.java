@@ -1,12 +1,16 @@
 package com.domaszekkk.medicalclinic.validator;
 
+import com.domaszekkk.medicalclinic.entity.Doctor;
+import com.domaszekkk.medicalclinic.entity.Facility;
 import com.domaszekkk.medicalclinic.entity.Visit;
+import com.domaszekkk.medicalclinic.exception.DoctorNotAssignedToFacilityException;
 import com.domaszekkk.medicalclinic.exception.DoctorVisitConflictException;
 import com.domaszekkk.medicalclinic.exception.InvalidVisitDateException;
 import com.domaszekkk.medicalclinic.exception.VisitAlreadyTakenException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import javax.print.Doc;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -40,6 +44,14 @@ public final class VisitValidator {
 
         if (visit.getStartDateTime().isBefore(LocalDateTime.now())) {
             throw new InvalidVisitDateException("Cannot register for past visit");
+        }
+    }
+
+    public static void validateDoctorAssignedToFacility(Doctor doctor, Facility facility) {
+        boolean isAssigned = doctor.getFacilities().stream()
+                .anyMatch(assignedFacility -> assignedFacility.getId().equals(facility.getId()));
+        if (!isAssigned) {
+            throw new DoctorNotAssignedToFacilityException(doctor.getId(), facility.getId());
         }
     }
 }

@@ -11,10 +11,12 @@ import org.mapstruct.Mapping;
 public interface VisitMapper {
     @Mapping(target = "doctorId", source = "doctor.id")
     @Mapping(target = "patientId", source = "patient.id")
+    @Mapping(target = "facilityId", source = "facility.id")
     VisitDto mapToDto(Visit visit);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "doctor", ignore = true)
     @Mapping(target = "patient", ignore = true)
+    @Mapping(target = "facility", ignore = true)
     Visit mapToEntity(AddVisitCommand command);
 }

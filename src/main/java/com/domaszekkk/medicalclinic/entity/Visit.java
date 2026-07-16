@@ -28,4 +28,8 @@ public class Visit {
     @ManyToOne
     @JoinColumn(name = "patient_id")
     private Patient patient;
+
+    @ManyToOne
+    @JoinColumn(name = "facility_id")
+    private Facility facility;
 }

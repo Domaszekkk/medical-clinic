@@ -13,6 +13,8 @@ import java.util.List;
 public interface VisitJpaRepository extends JpaRepository<Visit, Long> {
     Page<Visit> findByPatientId(Long patientId, Pageable pageable);
 
+    Page<Visit> findByPatientIsNull(Pageable pageable);
+
     @Query("SELECT visit FROM Visit visit " +
             "WHERE visit.doctor.id = :doctorId " +
             "AND visit.startDateTime < :endDateTime " +

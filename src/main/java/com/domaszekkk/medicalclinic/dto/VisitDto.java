@@ -16,5 +16,6 @@ public class VisitDto {
     private LocalDateTime startDateTime;
     private Long doctorId;
     private Long patientId;
+    private Long facilityId;
     private LocalDateTime endDateTime;
 }
