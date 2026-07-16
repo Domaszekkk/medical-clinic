@@ -21,8 +21,7 @@ public class FacilityService {
     private final FacilityMapper facilityMapper;
 
     public Page<FacilityDto> getAllFacilities(Pageable pageable) {
-        return facilityJpaRepository.findAll(pageable)
-                .map(facilityMapper::mapToDto);
+        return facilityJpaRepository.findAll(pageable).map(facilityMapper::mapToDto);
     }
 
     public FacilityDto addFacility(AddFacilityCommand command) {

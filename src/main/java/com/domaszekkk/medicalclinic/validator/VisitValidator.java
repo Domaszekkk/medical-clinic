@@ -10,7 +10,6 @@ import com.domaszekkk.medicalclinic.exception.VisitAlreadyTakenException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import javax.print.Doc;
 import java.time.LocalDateTime;
 import java.util.List;
 
