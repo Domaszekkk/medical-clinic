@@ -22,10 +22,12 @@ import org.springframework.web.bind.annotation.*;
 public class DoctorController {
     private final DoctorService doctorService;
 
-    @Operation(summary = "Get all doctors", description = "Returns a paginated list of all doctors")
+    @Operation(summary = "Get all doctors", description = "Returns a paginated list of doctors, optionally filtered by specialization")
     @GetMapping
-    public PageResponse<DoctorDto> getAllDoctors(Pageable pageable) {
-        return PageResponse.of(doctorService.getAllDoctors(pageable));
+    public PageResponse<DoctorDto> getDoctors(
+            @Parameter(description = "Doctor specialization to filter by") @RequestParam(required = false) String specialization,
+            Pageable pageable) {
+        return PageResponse.of(doctorService.getDoctors(specialization, pageable));
     }
 
     @Operation(summary = "Get doctor by id", description = "Returns a single doctor identified by their id")

@@ -92,7 +92,7 @@ public class DoctorServiceTest {
         when(doctorJpaRepository.findAll(pageable)).thenReturn(doctorPage);
 
         // when
-        Page<DoctorDto> result = doctorService.getAllDoctors(pageable);
+        Page<DoctorDto> result = doctorService.getDoctors(null, pageable);
 
         // then
         assertAll(

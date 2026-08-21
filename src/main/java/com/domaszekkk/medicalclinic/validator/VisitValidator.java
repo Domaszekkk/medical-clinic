@@ -53,4 +53,13 @@ public final class VisitValidator {
             throw new DoctorNotAssignedToFacilityException(doctor.getId(), facility.getId());
         }
     }
+
+    public static void validateDateRange(LocalDateTime from, LocalDateTime to) {
+        if (from == null || to == null) {
+            throw new InvalidVisitDateException("Both 'from' and 'to' must be provided");
+        }
+        if (!to.isAfter(from)) {
+            throw new InvalidVisitDateException("'to' must be after 'from'");
+        }
+    }
 }
