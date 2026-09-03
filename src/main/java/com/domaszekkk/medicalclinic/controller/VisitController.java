@@ -51,85 +51,37 @@ public class VisitController {
         return visitService.registerPatientForVisit(visitId, patientId);
     }
 
-    @Operation(summary = "Get patient visits", description = "Returns a paginated list of visits for a given patient")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "404", description = "Patient not found")
-    })
-    @GetMapping("/patients/{patientId}/visits")
-    public PageResponse<VisitDto> getPatientVisits(@Parameter(description = "Id of the patient") @PathVariable Long patientId, Pageable pageable) {
-        return PageResponse.of(visitService.getPatientVisits(patientId, pageable));
-    }
-
-    @Operation(summary = "Get available visits",
-            description = "Returns a paginated list of visit slots that do not have a patient assigned yet")
-    @GetMapping("/visits/available")
-    public PageResponse<VisitDto> getAvailableVisits(Pageable pageable) {
-        return PageResponse.of(visitService.getAvailableVisits(pageable));
-    }
-
-    @Operation(summary = "Get available visits in a time range",
-            description = "Returns a paginated list of available visit slots within a given time range, optionally filtered by doctor specialization")
-    @GetMapping("/visits/available/search")
-    public PageResponse<VisitDto> getAvailableVisitsInRange(
-            @Parameter(description = "Start of the time range (inclusive)")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @Parameter(description = "End of the time range (exclusive)")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
-            @Parameter(description = "Doctor specialization to filter by")
-            @RequestParam(required = false) String specialization,
-            Pageable pageable) {
-        return PageResponse.of(visitService.getAvailableVisitsInRange(from, to, specialization, pageable));
-    }
-
-    @Operation(summary = "Get visits in a time range",
-            description = "Returns all visits (taken and available) within a given time range for a given doctor specialization")
+    @Operation(summary = "Get visits",
+            description = "Returns a paginated, filterable list of visits. All filters are optional and can be combined: " +
+                    "filter by patient, by doctor, by a time range, by doctor specialization, by availability (no patient assigned), " +
+                    "or by scope relative to now (PAST, UPCOMING, ALL).")
+    @ApiResponses(value = {@ApiResponse(responseCode = "404", description = "Patient or doctor not found")})
     @GetMapping("/visits")
-    public PageResponse<VisitDto> getVisitsInRange(
+    public PageResponse<VisitDto> getVisits(
+            @Parameter(description = "Filter by patient id") @RequestParam(required = false) Long patientId,
+            @Parameter(description = "Filter by doctor id") @RequestParam(required = false) Long doctorId,
             @Parameter(description = "Start of the time range (inclusive)")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @Parameter(description = "End of the time range (exclusive)")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
-            @Parameter(description = "Doctor specialization to filter by")
-            @RequestParam String specialization,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @Parameter(description = "Filter by doctor specialization") @RequestParam(required = false) String specialization,
+            @Parameter(description = "If true, return only visits without a patient assigned") @RequestParam(required = false) Boolean available,
+            @Parameter(description = "Filter by time scope relative to now: PAST, UPCOMING or ALL") @RequestParam(required = false) VisitScope scope,
             Pageable pageable) {
-        return PageResponse.of(visitService.getVisitsInRange(from, to, specialization, pageable));
-    }
-
-    @Operation(summary = "Get available visits for a doctor",
-            description = "Returns a paginated list of visit slots for a given doctor that do not have a patient assigned yet")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "404", description = "Doctor not found")
-    })
-    @GetMapping("/doctors/{doctorId}/visits/available")
-    public PageResponse<VisitDto> getDoctorAvailableVisits(
-            @Parameter(description = "Id of the doctor") @PathVariable Long doctorId, Pageable pageable) {
-        return PageResponse.of(visitService.getDoctorAvailableVisits(doctorId, pageable));
-    }
-
-    @Operation(summary = "Get doctor visits",
-            description = "Returns a paginated list of visits for a given doctor, filtered by scope: PAST, UPCOMING or ALL")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "404", description = "Doctor not found")
-    })
-    @GetMapping("/doctors/{doctorId}/visits")
-    public PageResponse<VisitDto> getDoctorVisits(
-            @Parameter(description = "Id of the doctor") @PathVariable Long doctorId,
-            @Parameter(description = "Scope of visits to return") @RequestParam(defaultValue = "ALL") VisitScope scope,
-            Pageable pageable) {
-        return PageResponse.of(visitService.getDoctorVisits(doctorId, scope, pageable));
+        return PageResponse.of(visitService.getVisits(patientId, doctorId, from, to, specialization, available, scope, pageable));
     }
 
     @Operation(summary = "Cancel a visit",
-            description = "Cancels (deletes) a visit slot belonging to a given doctor, regardless of whether a patient was assigned")
+            description = "Cancels (deletes) a visit slot. If doctorId is provided, the visit must belong to that doctor.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Visit cancelled successfully"),
-            @ApiResponse(responseCode = "404", description = "Visit not found for this doctor")
+            @ApiResponse(responseCode = "404", description = "Visit not found (or not found for this doctor)")
     })
-    @DeleteMapping("/doctors/{doctorId}/visits/{visitId}")
+    @DeleteMapping("/visits/{visitId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelVisit(
-            @Parameter(description = "Id of the doctor") @PathVariable Long doctorId,
-            @Parameter(description = "Id of the visit to cancel") @PathVariable Long visitId) {
-        visitService.cancelVisit(doctorId, visitId);
+            @Parameter(description = "Id of the visit to cancel") @PathVariable Long visitId,
+            @Parameter(description = "Id of the doctor who owns the visit") @RequestParam(required = false) Long doctorId) {
+        visitService.cancelVisit(visitId, doctorId);
     }
 }

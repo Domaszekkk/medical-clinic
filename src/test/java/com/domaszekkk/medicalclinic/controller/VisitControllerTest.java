@@ -28,6 +28,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -175,7 +176,7 @@ class VisitControllerTest {
     }
 
     @Test
-    void getPatientVisits_DataCorrect_ReturnsVisits() throws Exception {
+    void getVisits_FilterByPatientId_ReturnsVisits() throws Exception {
         // given
         VisitDto visit = VisitDto.builder()
                 .id(1L)
@@ -196,10 +197,12 @@ class VisitControllerTest {
                 .build();
 
         Page<VisitDto> page = new PageImpl<>(List.of(visit, visit2), PageRequest.of(0, 10), 2);
-        when(visitService.getPatientVisits(eq(5L), any())).thenReturn(page);
+        when(visitService.getVisits(eq(5L), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any()))
+                .thenReturn(page);
 
         // when + then
-        mockMvc.perform(MockMvcRequestBuilders.get("/patients/{patientId}/visits", 5L))
+        mockMvc.perform(MockMvcRequestBuilders.get("/visits")
+                        .param("patientId", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].id").value(1))
@@ -208,7 +211,7 @@ class VisitControllerTest {
     }
 
     @Test
-    void getAvailableVisits_DataCorrect_ReturnsVisits() throws Exception {
+    void getVisits_FilterByAvailable_ReturnsVisits() throws Exception {
         // given
         VisitDto visit = VisitDto.builder()
                 .id(1L)
@@ -220,10 +223,12 @@ class VisitControllerTest {
                 .build();
 
         Page<VisitDto> page = new PageImpl<>(List.of(visit), PageRequest.of(0, 10), 1);
-        when(visitService.getAvailableVisits(any())).thenReturn(page);
+        when(visitService.getVisits(isNull(), isNull(), isNull(), isNull(), isNull(), eq(true), isNull(), any()))
+                .thenReturn(page);
 
         // when + then
-        mockMvc.perform(MockMvcRequestBuilders.get("/visits/available"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/visits")
+                        .param("available", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].id").value(1))

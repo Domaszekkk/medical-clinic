@@ -1,14 +1,14 @@
 package com.domaszekkk.medicalclinic.specification;
 
 import com.domaszekkk.medicalclinic.entity.Visit;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class VisitSpecifications {
-
-    private VisitSpecifications() {
-    }
 
     public static Specification<Visit> isAvailable() {
         return (root, query, cb) -> cb.isNull(root.get("patient"));

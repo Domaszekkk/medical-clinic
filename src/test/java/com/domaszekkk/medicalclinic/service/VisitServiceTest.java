@@ -31,11 +31,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class VisitServiceTest {
@@ -167,7 +164,7 @@ public class VisitServiceTest {
     }
 
     @Test
-    void getPatientVisits_DataCorrect_ReturnVisits() {
+    void getVisits_FilterByPatientId_ReturnVisits() {
         // given
         Facility facility = buildFacility();
         Doctor doctor = buildDoctor(null);
@@ -175,8 +172,6 @@ public class VisitServiceTest {
 
         LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime end = start.plusMinutes(15);
-        LocalDateTime start2 = start.plusDays(1);
-        LocalDateTime end2 = start2.plusMinutes(15);
 
         Visit visit = Visit.builder()
                 .id(1L)
@@ -187,52 +182,54 @@ public class VisitServiceTest {
                 .patient(patient)
                 .build();
 
-        Visit visit2 = Visit.builder()
-                .id(2L)
-                .startDateTime(start2)
-                .endDateTime(end2)
-                .doctor(doctor)
-                .facility(facility)
-                .patient(patient)
-                .build();
-
-        List<Visit> visits = List.of(visit, visit2);
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Visit> visitPage = new PageImpl<>(visits, pageable, visits.size());
+        Page<Visit> visitPage = new PageImpl<>(List.of(visit), pageable, 1);
+
         when(patientJpaRepository.existsById(1L)).thenReturn(true);
-        when(visitJpaRepository.findByPatientId(1L, pageable)).thenReturn(visitPage);
+        when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getPatientVisits(1L, pageable);
+        Page<VisitDto> result = visitService.getVisits(1L, null, null, null, null, null, null, pageable);
 
         // then
         assertAll(
-                () -> assertEquals(2, result.getContent().size()),
+                () -> assertEquals(1, result.getContent().size()),
                 () -> assertEquals(1L, result.getContent().get(0).getId()),
                 () -> assertEquals(start, result.getContent().get(0).getStartDateTime()),
                 () -> assertEquals(end, result.getContent().get(0).getEndDateTime()),
                 () -> assertEquals(1L, result.getContent().get(0).getDoctorId()),
                 () -> assertEquals(1L, result.getContent().get(0).getFacilityId()),
-                () -> assertEquals(1L, result.getContent().get(0).getPatientId()),
-                () -> assertEquals(2L, result.getContent().get(1).getId()),
-                () -> assertEquals(start2, result.getContent().get(1).getStartDateTime()),
-                () -> assertEquals(end2, result.getContent().get(1).getEndDateTime()),
-                () -> assertEquals(1L, result.getContent().get(1).getDoctorId()),
-                () -> assertEquals(1L, result.getContent().get(1).getFacilityId()),
-                () -> assertEquals(1L, result.getContent().get(1).getPatientId())
+                () -> assertEquals(1L, result.getContent().get(0).getPatientId())
         );
     }
 
     @Test
-    void getAvailableVisits_DataCorrect_ReturnVisits() {
+    void getVisits_PatientNotFound_ThrowsPatientNotFoundException() {
+        // given
+        Pageable pageable = PageRequest.of(0, 10);
+        when(patientJpaRepository.existsById(1L)).thenReturn(false);
+
+        // when
+        PatientNotFoundException exception = Assertions.assertThrows(
+                PatientNotFoundException.class,
+                () -> visitService.getVisits(1L, null, null, null, null, null, null, pageable));
+
+        // then
+        assertAll(
+                () -> assertEquals("Patient with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+        );
+        verify(visitJpaRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void getVisits_FilterByAvailable_ReturnVisits() {
         // given
         Facility facility = buildFacility();
         Doctor doctor = buildDoctor(null);
 
         LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime end = start.plusMinutes(15);
-        LocalDateTime start2 = start.plusDays(1);
-        LocalDateTime end2 = start2.plusMinutes(15);
 
         Visit visit = Visit.builder()
                 .id(1L)
@@ -242,42 +239,28 @@ public class VisitServiceTest {
                 .facility(facility)
                 .build();
 
-        Visit visit2 = Visit.builder()
-                .id(2L)
-                .startDateTime(start2)
-                .endDateTime(end2)
-                .doctor(doctor)
-                .facility(facility)
-                .build();
-
-        List<Visit> visits = List.of(visit, visit2);
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Visit> visitPage = new PageImpl<>(visits, pageable, visits.size());
+        Page<Visit> visitPage = new PageImpl<>(List.of(visit), pageable, 1);
+
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getAvailableVisits(pageable);
+        Page<VisitDto> result = visitService.getVisits(null, null, null, null, null, true, null, pageable);
 
         // then
         assertAll(
-                () -> assertEquals(2, result.getContent().size()),
+                () -> assertEquals(1, result.getContent().size()),
                 () -> assertEquals(1L, result.getContent().get(0).getId()),
                 () -> assertEquals(start, result.getContent().get(0).getStartDateTime()),
                 () -> assertEquals(end, result.getContent().get(0).getEndDateTime()),
                 () -> assertEquals(1L, result.getContent().get(0).getDoctorId()),
                 () -> assertEquals(1L, result.getContent().get(0).getFacilityId()),
-                () -> assertNull(result.getContent().get(0).getPatientId()),
-                () -> assertEquals(2L, result.getContent().get(1).getId()),
-                () -> assertEquals(start2, result.getContent().get(1).getStartDateTime()),
-                () -> assertEquals(end2, result.getContent().get(1).getEndDateTime()),
-                () -> assertEquals(1L, result.getContent().get(1).getDoctorId()),
-                () -> assertEquals(1L, result.getContent().get(1).getFacilityId()),
-                () -> assertNull(result.getContent().get(1).getPatientId())
+                () -> assertNull(result.getContent().get(0).getPatientId())
         );
     }
 
     @Test
-    void getDoctorAvailableVisits_DataCorrect_ReturnVisits() {
+    void getVisits_FilterByDoctorIdAndAvailable_ReturnVisits() {
         // given
         Facility facility = buildFacility();
         Doctor doctor = buildDoctor(null);
@@ -300,7 +283,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getDoctorAvailableVisits(1L, pageable);
+        Page<VisitDto> result = visitService.getVisits(null, 1L, null, null, null, true, null, pageable);
 
         // then
         assertAll(
@@ -315,14 +298,15 @@ public class VisitServiceTest {
     }
 
     @Test
-    void getDoctorAvailableVisits_DoctorNotFound_ThrowsDoctorNotFoundException() {
+    void getVisits_DoctorNotFound_ThrowsDoctorNotFoundException() {
         // given
         Pageable pageable = PageRequest.of(0, 10);
         when(doctorJpaRepository.existsById(1L)).thenReturn(false);
 
         // when
         DoctorNotFoundException exception = Assertions.assertThrows(
-                DoctorNotFoundException.class, () -> visitService.getDoctorAvailableVisits(1L, pageable));
+                DoctorNotFoundException.class,
+                () -> visitService.getVisits(null, 1L, null, null, null, null, null, pageable));
 
         // then
         assertAll(
@@ -333,7 +317,7 @@ public class VisitServiceTest {
     }
 
     @Test
-    void getDoctorVisits_ScopePast_ReturnVisits() {
+    void getVisits_FilterByDoctorIdAndScopePast_ReturnVisits() {
         // given
         Facility facility = buildFacility();
         Doctor doctor = buildDoctor(null);
@@ -356,7 +340,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getDoctorVisits(1L, VisitScope.PAST, pageable);
+        Page<VisitDto> result = visitService.getVisits(null, 1L, null, null, null, null, VisitScope.PAST, pageable);
 
         // then
         assertAll(
@@ -371,7 +355,7 @@ public class VisitServiceTest {
     }
 
     @Test
-    void getDoctorVisits_ScopeUpcoming_ReturnVisits() {
+    void getVisits_FilterByDoctorIdAndScopeUpcoming_ReturnVisits() {
         // given
         Facility facility = buildFacility();
         Doctor doctor = buildDoctor(null);
@@ -394,7 +378,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getDoctorVisits(1L, VisitScope.UPCOMING, pageable);
+        Page<VisitDto> result = visitService.getVisits(null, 1L, null, null, null, null, VisitScope.UPCOMING, pageable);
 
         // then
         assertAll(
@@ -409,7 +393,7 @@ public class VisitServiceTest {
     }
 
     @Test
-    void getDoctorVisits_ScopeAll_ReturnVisits() {
+    void getVisits_FilterByDoctorIdAndScopeAll_ReturnVisits() {
         // given
         Facility facility = buildFacility();
         Doctor doctor = buildDoctor(null);
@@ -432,7 +416,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getDoctorVisits(1L, VisitScope.ALL, pageable);
+        Page<VisitDto> result = visitService.getVisits(null, 1L, null, null, null, null, VisitScope.ALL, pageable);
 
         // then
         assertAll(
@@ -447,21 +431,110 @@ public class VisitServiceTest {
     }
 
     @Test
-    void getDoctorVisits_DoctorNotFound_ThrowsDoctorNotFoundException() {
+    void getVisits_FilterByDateRangeAndSpecializationAndAvailable_ReturnVisits() {
         // given
+        Facility facility = buildFacility();
+        Doctor doctor = buildDoctor(null);
+
+        LocalDateTime from = LocalDateTime.now().plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime to = from.plusDays(1);
+        LocalDateTime start = from.plusHours(10);
+        LocalDateTime end = start.plusMinutes(15);
+
+        Visit visit = Visit.builder()
+                .id(1L)
+                .startDateTime(start)
+                .endDateTime(end)
+                .doctor(doctor)
+                .facility(facility)
+                .build();
+
         Pageable pageable = PageRequest.of(0, 10);
-        when(doctorJpaRepository.existsById(1L)).thenReturn(false);
+        Page<Visit> visitPage = new PageImpl<>(List.of(visit), pageable, 1);
+
+        when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        DoctorNotFoundException exception = Assertions.assertThrows(
-                DoctorNotFoundException.class, () -> visitService.getDoctorVisits(1L, VisitScope.ALL, pageable));
+        Page<VisitDto> result = visitService.getVisits(null, null, from, to, "cardiology", true, null, pageable);
 
         // then
         assertAll(
-                () -> assertEquals("Doctor with id 1 not found", exception.getMessage()),
-                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
+                () -> assertEquals(1, result.getContent().size()),
+                () -> assertEquals(1L, result.getContent().get(0).getId()),
+                () -> assertEquals(start, result.getContent().get(0).getStartDateTime()),
+                () -> assertEquals(end, result.getContent().get(0).getEndDateTime()),
+                () -> assertEquals(1L, result.getContent().get(0).getDoctorId()),
+                () -> assertEquals(1L, result.getContent().get(0).getFacilityId()),
+                () -> assertNull(result.getContent().get(0).getPatientId())
         );
+    }
+
+    @Test
+    void getVisits_FilterByDateRangeAndSpecialization_ReturnVisits() {
+        // given
+        Facility facility = buildFacility();
+        Doctor doctor = buildDoctor(null);
+        Patient patient = buildPatient();
+
+        LocalDateTime from = LocalDateTime.now().plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime to = from.plusDays(1);
+        LocalDateTime start = from.plusHours(10);
+        LocalDateTime end = start.plusMinutes(15);
+
+        Visit visit = Visit.builder()
+                .id(1L)
+                .startDateTime(start)
+                .endDateTime(end)
+                .doctor(doctor)
+                .facility(facility)
+                .patient(patient)
+                .build();
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Visit> visitPage = new PageImpl<>(List.of(visit), pageable, 1);
+
+        when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
+
+        // when
+        Page<VisitDto> result = visitService.getVisits(null, null, from, to, "cardiology", null, null, pageable);
+
+        // then
+        assertAll(
+                () -> assertEquals(1, result.getContent().size()),
+                () -> assertEquals(1L, result.getContent().get(0).getId()),
+                () -> assertEquals(start, result.getContent().get(0).getStartDateTime()),
+                () -> assertEquals(end, result.getContent().get(0).getEndDateTime()),
+                () -> assertEquals(1L, result.getContent().get(0).getDoctorId()),
+                () -> assertEquals(1L, result.getContent().get(0).getFacilityId()),
+                () -> assertEquals(1L, result.getContent().get(0).getPatientId())
+        );
+    }
+
+    @Test
+    void getVisits_InvalidDateRange_ThrowsInvalidVisitDateException() {
+        // given
+        LocalDateTime from = LocalDateTime.now().plusDays(2);
+        LocalDateTime to = LocalDateTime.now().plusDays(1);
+        Pageable pageable = PageRequest.of(0, 10);
+
+        // when + then
+        Assertions.assertThrows(InvalidVisitDateException.class,
+                () -> visitService.getVisits(null, null, from, to, "cardiology", null, null, pageable));
         verify(visitJpaRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void getVisits_OnlyFromProvided_DoesNotValidateRange() {
+        // given
+        LocalDateTime from = LocalDateTime.now().plusDays(1);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Visit> visitPage = new PageImpl<>(List.of(), pageable, 0);
+
+        when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
+
+        // when + then
+        Assertions.assertDoesNotThrow(
+                () -> visitService.getVisits(null, null, from, null, null, null, null, pageable));
     }
 
     @Test
@@ -477,6 +550,24 @@ public class VisitServiceTest {
 
         // when
         visitService.cancelVisit(1L, 1L);
+
+        // then
+        verify(visitJpaRepository).delete(visit);
+    }
+
+    @Test
+    void cancelVisit_DoctorIdNotProvided_DeletesWithoutOwnerCheck() {
+        // given
+        Doctor doctor = buildDoctor(null);
+        Visit visit = Visit.builder()
+                .id(1L)
+                .doctor(doctor)
+                .build();
+
+        when(visitJpaRepository.findById(1L)).thenReturn(Optional.of(visit));
+
+        // when
+        visitService.cancelVisit(1L, null);
 
         // then
         verify(visitJpaRepository).delete(visit);
@@ -524,109 +615,25 @@ public class VisitServiceTest {
     }
 
     @Test
-    void getAvailableVisitsInRange_DataCorrect_ReturnVisits() {
+    void cancelVisit_VisitHasNoDoctor_ThrowsVisitNotFoundExceptionWithoutNPE() {
         // given
-        Facility facility = buildFacility();
-        Doctor doctor = buildDoctor(null);
-
-        LocalDateTime from = LocalDateTime.now().plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        LocalDateTime to = from.plusDays(1);
-        LocalDateTime start = from.plusHours(10);
-        LocalDateTime end = start.plusMinutes(15);
-
         Visit visit = Visit.builder()
                 .id(1L)
-                .startDateTime(start)
-                .endDateTime(end)
-                .doctor(doctor)
-                .facility(facility)
+                .doctor(null)
                 .build();
 
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Visit> visitPage = new PageImpl<>(List.of(visit), pageable, 1);
-
-        when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
+        when(visitJpaRepository.findById(1L)).thenReturn(Optional.of(visit));
 
         // when
-        Page<VisitDto> result = visitService.getAvailableVisitsInRange(from, to, "cardiology", pageable);
+        VisitNotFoundException exception = Assertions.assertThrows(
+                VisitNotFoundException.class, () -> visitService.cancelVisit(1L, 1L));
 
         // then
         assertAll(
-                () -> assertEquals(1, result.getContent().size()),
-                () -> assertEquals(1L, result.getContent().get(0).getId()),
-                () -> assertEquals(start, result.getContent().get(0).getStartDateTime()),
-                () -> assertEquals(end, result.getContent().get(0).getEndDateTime()),
-                () -> assertEquals(1L, result.getContent().get(0).getDoctorId()),
-                () -> assertEquals(1L, result.getContent().get(0).getFacilityId()),
-                () -> assertNull(result.getContent().get(0).getPatientId())
+                () -> assertEquals("Visit with id 1 not found", exception.getMessage()),
+                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
         );
-    }
-
-    @Test
-    void getAvailableVisitsInRange_InvalidDateRange_ThrowsInvalidVisitDateException() {
-        // given
-        LocalDateTime from = LocalDateTime.now().plusDays(2);
-        LocalDateTime to = LocalDateTime.now().plusDays(1);
-        Pageable pageable = PageRequest.of(0, 10);
-
-        // when + then
-        Assertions.assertThrows(InvalidVisitDateException.class,
-                () -> visitService.getAvailableVisitsInRange(from, to, "cardiology", pageable));
-        verify(visitJpaRepository, never()).findAll(any(Specification.class), any(Pageable.class));
-    }
-
-    @Test
-    void getVisitsInRange_DataCorrect_ReturnVisits() {
-        // given
-        Facility facility = buildFacility();
-        Doctor doctor = buildDoctor(null);
-        Patient patient = buildPatient();
-
-        LocalDateTime from = LocalDateTime.now().plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        LocalDateTime to = from.plusDays(1);
-        LocalDateTime start = from.plusHours(10);
-        LocalDateTime end = start.plusMinutes(15);
-
-        Visit visit = Visit.builder()
-                .id(1L)
-                .startDateTime(start)
-                .endDateTime(end)
-                .doctor(doctor)
-                .facility(facility)
-                .patient(patient)
-                .build();
-
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Visit> visitPage = new PageImpl<>(List.of(visit), pageable, 1);
-
-        when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
-
-        // when
-        Page<VisitDto> result = visitService.getVisitsInRange(from, to, "cardiology", pageable);
-
-        // then
-        assertAll(
-                () -> assertEquals(1, result.getContent().size()),
-                () -> assertEquals(1L, result.getContent().get(0).getId()),
-                () -> assertEquals(start, result.getContent().get(0).getStartDateTime()),
-                () -> assertEquals(end, result.getContent().get(0).getEndDateTime()),
-                () -> assertEquals(1L, result.getContent().get(0).getDoctorId()),
-                () -> assertEquals(1L, result.getContent().get(0).getFacilityId()),
-                () -> assertEquals(1L, result.getContent().get(0).getPatientId())
-        );
-    }
-
-    @Test
-    void getVisitsInRange_InvalidDateRange_ThrowsInvalidVisitDateException() {
-        // given
-        LocalDateTime from = LocalDateTime.now().plusDays(2);
-        LocalDateTime to = LocalDateTime.now().plusDays(1);
-        Pageable pageable = PageRequest.of(0, 10);
-
-        // when + then
-        Assertions.assertThrows(InvalidVisitDateException.class,
-                () -> visitService.getVisitsInRange(from, to, "cardiology", pageable));
-        verify(visitJpaRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+        verify(visitJpaRepository, never()).delete(any(Visit.class));
     }
 
     @Test
@@ -825,22 +832,5 @@ public class VisitServiceTest {
                 () -> assertEquals("Visit with id 1 is already taken", exception.getMessage()),
                 () -> assertEquals(HttpStatus.CONFLICT, exception.getStatus())
         );
-    }
-
-    @Test
-    void getPatientVisits_PatientNotFound_ThrowsPatientNotFoundException() {
-        // given
-        Pageable pageable = PageRequest.of(0, 10);
-        when(patientJpaRepository.existsById(1L)).thenReturn(false);
-
-        // when + then
-        PatientNotFoundException exception = Assertions.assertThrows(
-                PatientNotFoundException.class, () -> visitService.getPatientVisits(1L, pageable));
-
-        assertAll(
-                () -> assertEquals("Patient with id 1 not found", exception.getMessage()),
-                () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus())
-        );
-        verify(visitJpaRepository, never()).findByPatientId(any(), any());
     }
 }

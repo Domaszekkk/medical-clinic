@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -40,9 +41,11 @@ public class VisitService {
     public VisitDto addVisit(Long doctorId, AddVisitCommand command) {
         Doctor doctor = findDoctorOrThrow(doctorId);
         Facility facility = findFacilityOrThrow(command.getFacilityId());
+
         VisitValidator.validateDoctorAssignedToFacility(doctor, facility);
         VisitValidator.validateVisitDate(command.getStartDateTime(), command.getEndDateTime());
         validateNoConflictingVisits(doctorId, command.getStartDateTime(), command.getEndDateTime());
+
         Visit visit = visitMapper.mapToEntity(command);
         visit.setDoctor(doctor);
         visit.setFacility(facility);
@@ -53,69 +56,64 @@ public class VisitService {
         Visit visit = visitJpaRepository
                 .findById(visitId)
                 .orElseThrow(() -> new VisitNotFoundException(visitId));
+
         Patient patient = patientJpaRepository
                 .findById(patientId)
                 .orElseThrow(() -> new PatientNotFoundException(patientId));
+
         VisitValidator.validatePatientRegistration(visit);
+
         visit.setPatient(patient);
         return visitMapper.mapToDto(visitJpaRepository.save(visit));
     }
 
-    public Page<VisitDto> getPatientVisits(Long patientId, Pageable pageable) {
-        if (!patientJpaRepository.existsById(patientId)) {
+    public Page<VisitDto> getVisits(Long patientId, Long doctorId, LocalDateTime from, LocalDateTime to,
+                                    String specialization, Boolean available, VisitScope scope,
+                                    Pageable pageable) {
+        if (patientId != null && !patientJpaRepository.existsById(patientId)) {
             throw new PatientNotFoundException(patientId);
         }
-        return visitJpaRepository.findByPatientId(patientId, pageable)
-                .map(visitMapper::mapToDto);
-    }
+        if (doctorId != null && !doctorJpaRepository.existsById(doctorId)) {
+            throw new DoctorNotFoundException(doctorId);
+        }
+        if (from != null && to != null) {
+            VisitValidator.validateDateRange(from, to);
+        }
 
-    public Page<VisitDto> getAvailableVisits(Pageable pageable) {
-        Specification<Visit> spec = VisitSpecifications.isAvailable();
+        Specification<Visit> spec = Specification.allOf(
+                VisitSpecifications.hasPatientId(patientId),
+                VisitSpecifications.hasDoctorId(doctorId),
+                VisitSpecifications.startsAtOrAfter(from),
+                VisitSpecifications.startsBefore(to),
+                VisitSpecifications.hasSpecialization(specialization),
+                Boolean.TRUE.equals(available) ? VisitSpecifications.isAvailable() : null,
+                scopeSpecification(scope)
+        );
         return visitJpaRepository.findAll(spec, pageable)
                 .map(visitMapper::mapToDto);
     }
 
-    public Page<VisitDto> getDoctorAvailableVisits(Long doctorId, Pageable pageable) {
-        requireDoctorExists(doctorId);
-        Specification<Visit> spec = Specification.allOf(VisitSpecifications.isAvailable(), VisitSpecifications.hasDoctorId(doctorId));
-        return visitJpaRepository.findAll(spec, pageable)
-                .map(visitMapper::mapToDto);
-    }
-
-    public Page<VisitDto> getDoctorVisits(Long doctorId, VisitScope scope, Pageable pageable) {
-        requireDoctorExists(doctorId);
+    private Specification<Visit> scopeSpecification(VisitScope scope) {
+        if (scope == null) {
+            return null;
+        }
         LocalDateTime now = LocalDateTime.now();
-        Specification<Visit> scopeSpec = switch (scope) {
+        return switch (scope) {
             case PAST -> VisitSpecifications.endsBefore(now);
             case UPCOMING -> VisitSpecifications.startsAfter(now);
             case ALL -> null;
         };
-        Specification<Visit> spec = Specification.allOf(VisitSpecifications.hasDoctorId(doctorId), scopeSpec);
-        return visitJpaRepository.findAll(spec, pageable)
-                .map(visitMapper::mapToDto);
     }
 
     @Transactional
-    public void cancelVisit(Long doctorId, Long visitId) {
+    public void cancelVisit(Long visitId, Long doctorId) {
         Visit visit = visitJpaRepository.findById(visitId)
                 .orElseThrow(() -> new VisitNotFoundException(visitId));
-        if (visit.getDoctor() == null || !visit.getDoctor().getId().equals(doctorId)) {
+        if (doctorId != null
+                && (visit.getDoctor() == null || !Objects.equals(visit.getDoctor().getId(), doctorId))) {
             throw new VisitNotFoundException(visitId);
         }
         visitJpaRepository.delete(visit);
-    }
-
-    public Page<VisitDto> getAvailableVisitsInRange(LocalDateTime from, LocalDateTime to, String specialization, Pageable pageable) {
-        VisitValidator.validateDateRange(from, to);
-        Specification<Visit> spec = Specification.allOf(VisitSpecifications.isAvailable(), dateRangeAndSpecializationSpec(from, to, specialization));
-        return visitJpaRepository.findAll(spec, pageable)
-                .map(visitMapper::mapToDto);
-    }
-
-    public Page<VisitDto> getVisitsInRange(LocalDateTime from, LocalDateTime to, String specialization, Pageable pageable) {
-        VisitValidator.validateDateRange(from, to);
-        return visitJpaRepository.findAll(dateRangeAndSpecializationSpec(from, to, specialization), pageable)
-                .map(visitMapper::mapToDto);
     }
 
     private Doctor findDoctorOrThrow(Long doctorId) {
@@ -131,19 +129,5 @@ public class VisitService {
     private void validateNoConflictingVisits(Long doctorId, LocalDateTime start, LocalDateTime end) {
         List<Visit> conflictingVisits = visitJpaRepository.findConflictingVisits(doctorId, start, end);
         VisitValidator.validateConflictingVisits(conflictingVisits, start);
-    }
-
-    private void requireDoctorExists(Long doctorId) {
-        if (!doctorJpaRepository.existsById(doctorId)) {
-            throw new DoctorNotFoundException(doctorId);
-        }
-    }
-
-    private Specification<Visit> dateRangeAndSpecializationSpec(LocalDateTime from, LocalDateTime to, String specialization) {
-        return Specification.allOf(
-                VisitSpecifications.startsAtOrAfter(from),
-                VisitSpecifications.startsBefore(to),
-                VisitSpecifications.hasSpecialization(specialization)
-        );
     }
 }
