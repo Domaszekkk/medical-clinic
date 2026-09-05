@@ -1,5 +1,6 @@
 package com.domaszekkk.medicalclinic.controller;
 
+import com.domaszekkk.medicalclinic.TestcontainersConfiguration;
 import com.domaszekkk.medicalclinic.dto.AddPatientCommand;
 import com.domaszekkk.medicalclinic.dto.ChangePasswordCommand;
 import com.domaszekkk.medicalclinic.dto.PatientDto;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(TestcontainersConfiguration.class)
 class PatientControllerTest {
 
     @Autowired

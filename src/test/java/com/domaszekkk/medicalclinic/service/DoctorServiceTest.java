@@ -24,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -89,10 +90,10 @@ public class DoctorServiceTest {
         List<Doctor> doctors = List.of(doctor, doctor2);
         Pageable pageable = PageRequest.of(0, 10);
         Page<Doctor> doctorPage = new PageImpl<>(doctors, pageable, doctors.size());
-        when(doctorJpaRepository.findAll(pageable)).thenReturn(doctorPage);
+        when(doctorJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(doctorPage);
 
         // when
-        Page<DoctorDto> result = doctorService.getAllDoctors(pageable);
+        Page<DoctorDto> result = doctorService.getDoctors(null, pageable);
 
         // then
         assertAll(

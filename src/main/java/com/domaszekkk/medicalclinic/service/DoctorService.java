@@ -14,9 +14,11 @@ import com.domaszekkk.medicalclinic.mapper.DoctorMapper;
 import com.domaszekkk.medicalclinic.repository.DoctorJpaRepository;
 import com.domaszekkk.medicalclinic.repository.FacilityJpaRepository;
 import com.domaszekkk.medicalclinic.repository.UserJpaRepository;
+import com.domaszekkk.medicalclinic.specification.DoctorSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,8 +31,9 @@ public class DoctorService {
     private final FacilityJpaRepository facilityJpaRepository;
     private final UserJpaRepository userJpaRepository;
 
-    public Page<DoctorDto> getAllDoctors(Pageable pageable) {
-        return doctorJpaRepository.findAll(pageable).map(doctorMapper::mapToDto);
+    public Page<DoctorDto> getDoctors(String specialization, Pageable pageable) {
+        Specification<Doctor> spec = DoctorSpecifications.hasSpecialization(specialization);
+        return doctorJpaRepository.findAll(spec, pageable).map(doctorMapper::mapToDto);
     }
 
     public DoctorDto addDoctor(AddDoctorCommand command) {

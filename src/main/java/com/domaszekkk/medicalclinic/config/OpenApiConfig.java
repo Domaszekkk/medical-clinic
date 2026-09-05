@@ -14,6 +14,6 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("Medical Clinic API")
                         .description("REST API for managing patients, doctors, facilities and visits in a medical clinic")
-                        .version("1.0"));
+                        .version("1.1"));
     }
 }

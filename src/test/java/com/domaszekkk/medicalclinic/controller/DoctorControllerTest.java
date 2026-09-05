@@ -1,5 +1,6 @@
 package com.domaszekkk.medicalclinic.controller;
 
+import com.domaszekkk.medicalclinic.TestcontainersConfiguration;
 import com.domaszekkk.medicalclinic.dto.AddDoctorCommand;
 import com.domaszekkk.medicalclinic.dto.DoctorDto;
 import com.domaszekkk.medicalclinic.dto.UpdateDoctorRequest;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(TestcontainersConfiguration.class)
 class DoctorControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -62,7 +65,7 @@ class DoctorControllerTest {
                 .build();
 
         Page<DoctorDto> page = new PageImpl<>(List.of(doctor, doctor2), PageRequest.of(0, 10), 2);
-        when(doctorService.getAllDoctors(any())).thenReturn(page);
+        when(doctorService.getDoctors(any(), any())).thenReturn(page);
 
         // when + then
         mockMvc.perform(MockMvcRequestBuilders.get("/doctors"))

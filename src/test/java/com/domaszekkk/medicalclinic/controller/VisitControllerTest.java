@@ -1,7 +1,9 @@
 package com.domaszekkk.medicalclinic.controller;
 
+import com.domaszekkk.medicalclinic.TestcontainersConfiguration;
 import com.domaszekkk.medicalclinic.dto.AddVisitCommand;
 import com.domaszekkk.medicalclinic.dto.VisitDto;
+import com.domaszekkk.medicalclinic.dto.VisitFilter;
 import com.domaszekkk.medicalclinic.exception.DoctorNotAssignedToFacilityException;
 import com.domaszekkk.medicalclinic.exception.DoctorNotFoundException;
 import com.domaszekkk.medicalclinic.exception.PatientNotFoundException;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(TestcontainersConfiguration.class)
 class VisitControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -125,7 +129,7 @@ class VisitControllerTest {
         when(visitService.registerPatientForVisit(1L, 5L)).thenReturn(visit);
 
         // when + then
-        mockMvc.perform(MockMvcRequestBuilders.patch("/visits/{visitId}", 1L)
+        mockMvc.perform(MockMvcRequestBuilders.put("/visits/{visitId}", 1L)
                         .param("patientId", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
@@ -139,7 +143,7 @@ class VisitControllerTest {
                 .thenThrow(new PatientNotFoundException(5L));
 
         // when + then
-        mockMvc.perform(MockMvcRequestBuilders.patch("/visits/{visitId}", 1L)
+        mockMvc.perform(MockMvcRequestBuilders.put("/visits/{visitId}", 1L)
                         .param("patientId", "5"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Patient with id 5 not found"));
@@ -152,7 +156,7 @@ class VisitControllerTest {
                 .thenThrow(new VisitNotFoundException(1L));
 
         // when + then
-        mockMvc.perform(MockMvcRequestBuilders.patch("/visits/{visitId}", 1L)
+        mockMvc.perform(MockMvcRequestBuilders.put("/visits/{visitId}", 1L)
                         .param("patientId", "5"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Visit with id 1 not found"));
@@ -165,14 +169,14 @@ class VisitControllerTest {
                 .thenThrow(new VisitAlreadyTakenException(1L));
 
         // when + then
-        mockMvc.perform(MockMvcRequestBuilders.patch("/visits/{visitId}", 1L)
+        mockMvc.perform(MockMvcRequestBuilders.put("/visits/{visitId}", 1L)
                         .param("patientId", "5"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Visit with id 1 is already taken"));
     }
 
     @Test
-    void getPatientVisits_DataCorrect_ReturnsVisits() throws Exception {
+    void getVisits_FilterByPatientId_ReturnsVisits() throws Exception {
         // given
         VisitDto visit = VisitDto.builder()
                 .id(1L)
@@ -193,10 +197,12 @@ class VisitControllerTest {
                 .build();
 
         Page<VisitDto> page = new PageImpl<>(List.of(visit, visit2), PageRequest.of(0, 10), 2);
-        when(visitService.getPatientVisits(eq(5L), any())).thenReturn(page);
+        when(visitService.getVisits(eq(new VisitFilter(5L, null, null, null, null, null, null)), any()))
+                .thenReturn(page);
 
         // when + then
-        mockMvc.perform(MockMvcRequestBuilders.get("/patients/{patientId}/visits", 5L))
+        mockMvc.perform(MockMvcRequestBuilders.get("/visits")
+                        .param("patientId", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].id").value(1))
@@ -205,7 +211,7 @@ class VisitControllerTest {
     }
 
     @Test
-    void getAvailableVisits_DataCorrect_ReturnsVisits() throws Exception {
+    void getVisits_FilterByAvailable_ReturnsVisits() throws Exception {
         // given
         VisitDto visit = VisitDto.builder()
                 .id(1L)
@@ -217,10 +223,12 @@ class VisitControllerTest {
                 .build();
 
         Page<VisitDto> page = new PageImpl<>(List.of(visit), PageRequest.of(0, 10), 1);
-        when(visitService.getAvailableVisits(any())).thenReturn(page);
+        when(visitService.getVisits(eq(new VisitFilter(null, null, null, null, null, true, null)), any()))
+                .thenReturn(page);
 
         // when + then
-        mockMvc.perform(MockMvcRequestBuilders.get("/visits/available"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/visits")
+                        .param("available", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].id").value(1))

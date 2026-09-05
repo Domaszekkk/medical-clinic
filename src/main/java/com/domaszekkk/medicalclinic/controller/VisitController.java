@@ -1,8 +1,6 @@
 package com.domaszekkk.medicalclinic.controller;
 
-import com.domaszekkk.medicalclinic.dto.AddVisitCommand;
-import com.domaszekkk.medicalclinic.dto.PageResponse;
-import com.domaszekkk.medicalclinic.dto.VisitDto;
+import com.domaszekkk.medicalclinic.dto.*;
 import com.domaszekkk.medicalclinic.service.VisitService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -10,9 +8,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -40,23 +40,34 @@ public class VisitController {
             @ApiResponse(responseCode = "404", description = "Visit or patient not found"),
             @ApiResponse(responseCode = "409", description = "Visit is already taken")
     })
-    @PatchMapping("/visits/{visitId}")
+    @PutMapping("/visits/{visitId}")
     public VisitDto registerPatientForVisit(
             @Parameter(description = "Id of the visit") @PathVariable Long visitId,
             @Parameter(description = "Id of the patient to register") @RequestParam Long patientId) {
         return visitService.registerPatientForVisit(visitId, patientId);
     }
 
-    @Operation(summary = "Get patient visits", description = "Returns a paginated list of visits for a given patient")
-    @GetMapping("/patients/{patientId}/visits")
-    public PageResponse<VisitDto> getPatientVisits(@Parameter(description = "Id of the patient") @PathVariable Long patientId, Pageable pageable) {
-        return PageResponse.of(visitService.getPatientVisits(patientId, pageable));
+    @Operation(summary = "Get visits",
+            description = "Returns a paginated, filterable list of visits. All filters are optional and can be combined: " +
+                    "filter by patient, by doctor, by a time range, by doctor specialization, by availability (no patient assigned), " +
+                    "or by scope relative to now (PAST, UPCOMING, ALL).")
+    @ApiResponses(value = {@ApiResponse(responseCode = "404", description = "Patient or doctor not found")})
+    @GetMapping("/visits")
+    public PageResponse<VisitDto> getVisits(@ParameterObject VisitFilter filter, Pageable pageable) {
+        return PageResponse.of(visitService.getVisits(filter, pageable));
     }
 
-    @Operation(summary = "Get available visits",
-            description = "Returns a paginated list of visit slots that do not have a patient assigned yet")
-    @GetMapping("/visits/available")
-    public PageResponse<VisitDto> getAvailableVisits(Pageable pageable) {
-        return PageResponse.of(visitService.getAvailableVisits(pageable));
+    @Operation(summary = "Cancel a visit",
+            description = "Cancels (deletes) a visit slot. If doctorId is provided, the visit must belong to that doctor.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Visit cancelled successfully"),
+            @ApiResponse(responseCode = "404", description = "Visit not found (or not found for this doctor)")
+    })
+    @DeleteMapping("/visits/{visitId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelVisit(
+            @Parameter(description = "Id of the visit to cancel") @PathVariable Long visitId,
+            @Parameter(description = "Id of the doctor who owns the visit") @RequestParam(required = false) Long doctorId) {
+        visitService.cancelVisit(visitId, doctorId);
     }
 }
