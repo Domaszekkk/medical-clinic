@@ -3,10 +3,7 @@ package com.domaszekkk.medicalclinic.validator;
 import com.domaszekkk.medicalclinic.entity.Doctor;
 import com.domaszekkk.medicalclinic.entity.Facility;
 import com.domaszekkk.medicalclinic.entity.Visit;
-import com.domaszekkk.medicalclinic.exception.DoctorNotAssignedToFacilityException;
-import com.domaszekkk.medicalclinic.exception.DoctorVisitConflictException;
-import com.domaszekkk.medicalclinic.exception.InvalidVisitDateException;
-import com.domaszekkk.medicalclinic.exception.VisitAlreadyTakenException;
+import com.domaszekkk.medicalclinic.exception.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -60,6 +57,18 @@ public final class VisitValidator {
         }
         if (!to.isAfter(from)) {
             throw new InvalidVisitDateException("'to' must be after 'from'");
+        }
+    }
+
+    public static void validatePatientExists(boolean exists, Long patientId) {
+        if (!exists) {
+            throw new PatientNotFoundException(patientId);
+        }
+    }
+
+    public static void validateDoctorExists(boolean exists, Long doctorId) {
+        if (!exists) {
+            throw new DoctorNotFoundException(doctorId);
         }
     }
 }

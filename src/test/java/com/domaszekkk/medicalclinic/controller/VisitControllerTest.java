@@ -3,6 +3,7 @@ package com.domaszekkk.medicalclinic.controller;
 import com.domaszekkk.medicalclinic.TestcontainersConfiguration;
 import com.domaszekkk.medicalclinic.dto.AddVisitCommand;
 import com.domaszekkk.medicalclinic.dto.VisitDto;
+import com.domaszekkk.medicalclinic.dto.VisitFilter;
 import com.domaszekkk.medicalclinic.exception.DoctorNotAssignedToFacilityException;
 import com.domaszekkk.medicalclinic.exception.DoctorNotFoundException;
 import com.domaszekkk.medicalclinic.exception.PatientNotFoundException;
@@ -28,7 +29,6 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -197,7 +197,7 @@ class VisitControllerTest {
                 .build();
 
         Page<VisitDto> page = new PageImpl<>(List.of(visit, visit2), PageRequest.of(0, 10), 2);
-        when(visitService.getVisits(eq(5L), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any()))
+        when(visitService.getVisits(eq(new VisitFilter(5L, null, null, null, null, null, null)), any()))
                 .thenReturn(page);
 
         // when + then
@@ -223,7 +223,7 @@ class VisitControllerTest {
                 .build();
 
         Page<VisitDto> page = new PageImpl<>(List.of(visit), PageRequest.of(0, 10), 1);
-        when(visitService.getVisits(isNull(), isNull(), isNull(), isNull(), isNull(), eq(true), isNull(), any()))
+        when(visitService.getVisits(eq(new VisitFilter(null, null, null, null, null, true, null)), any()))
                 .thenReturn(page);
 
         // when + then

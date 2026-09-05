@@ -2,6 +2,7 @@ package com.domaszekkk.medicalclinic.service;
 
 import com.domaszekkk.medicalclinic.dto.AddVisitCommand;
 import com.domaszekkk.medicalclinic.dto.VisitDto;
+import com.domaszekkk.medicalclinic.dto.VisitFilter;
 import com.domaszekkk.medicalclinic.dto.VisitScope;
 import com.domaszekkk.medicalclinic.entity.Doctor;
 import com.domaszekkk.medicalclinic.entity.Facility;
@@ -189,7 +190,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getVisits(1L, null, null, null, null, null, null, pageable);
+        Page<VisitDto> result = visitService.getVisits(new VisitFilter(1L, null, null, null, null, null, null), pageable);
 
         // then
         assertAll(
@@ -212,7 +213,7 @@ public class VisitServiceTest {
         // when
         PatientNotFoundException exception = Assertions.assertThrows(
                 PatientNotFoundException.class,
-                () -> visitService.getVisits(1L, null, null, null, null, null, null, pageable));
+                () -> visitService.getVisits(new VisitFilter(1L, null, null, null, null, null, null), pageable));
 
         // then
         assertAll(
@@ -245,7 +246,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getVisits(null, null, null, null, null, true, null, pageable);
+        Page<VisitDto> result = visitService.getVisits(new VisitFilter(null, null, null, null, null, true, null), pageable);
 
         // then
         assertAll(
@@ -283,7 +284,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getVisits(null, 1L, null, null, null, true, null, pageable);
+        Page<VisitDto> result = visitService.getVisits(new VisitFilter(null, 1L, null, null, null, true, null), pageable);
 
         // then
         assertAll(
@@ -306,7 +307,7 @@ public class VisitServiceTest {
         // when
         DoctorNotFoundException exception = Assertions.assertThrows(
                 DoctorNotFoundException.class,
-                () -> visitService.getVisits(null, 1L, null, null, null, null, null, pageable));
+                () -> visitService.getVisits(new VisitFilter(null, 1L, null, null, null, null, null), pageable));
 
         // then
         assertAll(
@@ -340,7 +341,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getVisits(null, 1L, null, null, null, null, VisitScope.PAST, pageable);
+        Page<VisitDto> result = visitService.getVisits(new VisitFilter(null, 1L, null, null, null, null, VisitScope.PAST), pageable);
 
         // then
         assertAll(
@@ -378,7 +379,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getVisits(null, 1L, null, null, null, null, VisitScope.UPCOMING, pageable);
+        Page<VisitDto> result = visitService.getVisits(new VisitFilter(null, 1L, null, null, null, null, VisitScope.UPCOMING), pageable);
 
         // then
         assertAll(
@@ -416,7 +417,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getVisits(null, 1L, null, null, null, null, VisitScope.ALL, pageable);
+        Page<VisitDto> result = visitService.getVisits(new VisitFilter(null, 1L, null, null, null, null, VisitScope.ALL), pageable);
 
         // then
         assertAll(
@@ -455,7 +456,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getVisits(null, null, from, to, "cardiology", true, null, pageable);
+        Page<VisitDto> result = visitService.getVisits(new VisitFilter(null, null, from, to, "cardiology", true, null), pageable);
 
         // then
         assertAll(
@@ -496,7 +497,7 @@ public class VisitServiceTest {
         when(visitJpaRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(visitPage);
 
         // when
-        Page<VisitDto> result = visitService.getVisits(null, null, from, to, "cardiology", null, null, pageable);
+        Page<VisitDto> result = visitService.getVisits(new VisitFilter(null, null, from, to, "cardiology", null, null), pageable);
 
         // then
         assertAll(
@@ -519,7 +520,7 @@ public class VisitServiceTest {
 
         // when + then
         Assertions.assertThrows(InvalidVisitDateException.class,
-                () -> visitService.getVisits(null, null, from, to, "cardiology", null, null, pageable));
+                () -> visitService.getVisits(new VisitFilter(null, null, from, to, "cardiology", null, null), pageable));
         verify(visitJpaRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 
@@ -534,7 +535,7 @@ public class VisitServiceTest {
 
         // when + then
         Assertions.assertDoesNotThrow(
-                () -> visitService.getVisits(null, null, from, null, null, null, null, pageable));
+                () -> visitService.getVisits(new VisitFilter(null, null, from, null, null, null, null), pageable));
     }
 
     @Test

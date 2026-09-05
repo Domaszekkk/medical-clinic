@@ -1,9 +1,6 @@
 package com.domaszekkk.medicalclinic.controller;
 
-import com.domaszekkk.medicalclinic.dto.AddVisitCommand;
-import com.domaszekkk.medicalclinic.dto.PageResponse;
-import com.domaszekkk.medicalclinic.dto.VisitDto;
-import com.domaszekkk.medicalclinic.dto.VisitScope;
+import com.domaszekkk.medicalclinic.dto.*;
 import com.domaszekkk.medicalclinic.service.VisitService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,12 +8,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 
 @RestController
 @RequiredArgsConstructor
@@ -57,18 +53,8 @@ public class VisitController {
                     "or by scope relative to now (PAST, UPCOMING, ALL).")
     @ApiResponses(value = {@ApiResponse(responseCode = "404", description = "Patient or doctor not found")})
     @GetMapping("/visits")
-    public PageResponse<VisitDto> getVisits(
-            @Parameter(description = "Filter by patient id") @RequestParam(required = false) Long patientId,
-            @Parameter(description = "Filter by doctor id") @RequestParam(required = false) Long doctorId,
-            @Parameter(description = "Start of the time range (inclusive)")
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @Parameter(description = "End of the time range (exclusive)")
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
-            @Parameter(description = "Filter by doctor specialization") @RequestParam(required = false) String specialization,
-            @Parameter(description = "If true, return only visits without a patient assigned") @RequestParam(required = false) Boolean available,
-            @Parameter(description = "Filter by time scope relative to now: PAST, UPCOMING or ALL") @RequestParam(required = false) VisitScope scope,
-            Pageable pageable) {
-        return PageResponse.of(visitService.getVisits(patientId, doctorId, from, to, specialization, available, scope, pageable));
+    public PageResponse<VisitDto> getVisits(@ParameterObject VisitFilter filter, Pageable pageable) {
+        return PageResponse.of(visitService.getVisits(filter, pageable));
     }
 
     @Operation(summary = "Cancel a visit",

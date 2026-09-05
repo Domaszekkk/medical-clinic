@@ -2,6 +2,7 @@ package com.domaszekkk.medicalclinic.service;
 
 import com.domaszekkk.medicalclinic.dto.AddVisitCommand;
 import com.domaszekkk.medicalclinic.dto.VisitDto;
+import com.domaszekkk.medicalclinic.dto.VisitFilter;
 import com.domaszekkk.medicalclinic.dto.VisitScope;
 import com.domaszekkk.medicalclinic.entity.Doctor;
 import com.domaszekkk.medicalclinic.entity.Facility;
@@ -67,30 +68,32 @@ public class VisitService {
         return visitMapper.mapToDto(visitJpaRepository.save(visit));
     }
 
-    public Page<VisitDto> getVisits(Long patientId, Long doctorId, LocalDateTime from, LocalDateTime to,
-                                    String specialization, Boolean available, VisitScope scope,
-                                    Pageable pageable) {
-        if (patientId != null && !patientJpaRepository.existsById(patientId)) {
-            throw new PatientNotFoundException(patientId);
-        }
-        if (doctorId != null && !doctorJpaRepository.existsById(doctorId)) {
-            throw new DoctorNotFoundException(doctorId);
-        }
-        if (from != null && to != null) {
-            VisitValidator.validateDateRange(from, to);
-        }
+    public Page<VisitDto> getVisits(VisitFilter filter, Pageable pageable) {
+        validateFilter(filter);
 
         Specification<Visit> spec = Specification.allOf(
-                VisitSpecifications.hasPatientId(patientId),
-                VisitSpecifications.hasDoctorId(doctorId),
-                VisitSpecifications.startsAtOrAfter(from),
-                VisitSpecifications.startsBefore(to),
-                VisitSpecifications.hasSpecialization(specialization),
-                Boolean.TRUE.equals(available) ? VisitSpecifications.isAvailable() : null,
-                scopeSpecification(scope)
+                VisitSpecifications.hasPatientId(filter.patientId()),
+                VisitSpecifications.hasDoctorId(filter.doctorId()),
+                VisitSpecifications.startsAtOrAfter(filter.from()),
+                VisitSpecifications.startsBefore(filter.to()),
+                VisitSpecifications.hasSpecialization(filter.specialization()),
+                Boolean.TRUE.equals(filter.available()) ? VisitSpecifications.isAvailable() : null,
+                scopeSpecification(filter.scope())
         );
         return visitJpaRepository.findAll(spec, pageable)
                 .map(visitMapper::mapToDto);
+    }
+
+    private void validateFilter(VisitFilter filter) {
+        if (filter.patientId() != null) {
+            VisitValidator.validatePatientExists(patientJpaRepository.existsById(filter.patientId()), filter.patientId());
+        }
+        if (filter.doctorId() != null) {
+            VisitValidator.validateDoctorExists(doctorJpaRepository.existsById(filter.doctorId()), filter.doctorId());
+        }
+        if (filter.from() != null && filter.to() != null) {
+            VisitValidator.validateDateRange(filter.from(), filter.to());
+        }
     }
 
     private Specification<Visit> scopeSpecification(VisitScope scope) {
