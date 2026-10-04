@@ -1,4 +1,4 @@
-package com.domaszekkk.medicalclinic.dto;
+package com.example.medicalclinic;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

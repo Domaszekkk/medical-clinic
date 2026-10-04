@@ -1,4 +1,4 @@
-package com.domaszekkk.medicalclinic.dto;
+package com.example.medicalclinic;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateUserRequest {
+public class UpdateUserCommand {
     private String email;
-    private String password;
 }

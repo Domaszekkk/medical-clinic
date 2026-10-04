@@ -1,4 +1,4 @@
-package com.domaszekkk.medicalclinic.dto;
+package com.example.medicalclinic;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdatePatientRequest {
+public class UpdatePatientCommand {
     private String idCardNo;
     private String firstName;
     private String lastName;
