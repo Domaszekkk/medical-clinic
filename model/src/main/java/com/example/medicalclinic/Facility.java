@@ -15,4 +15,21 @@ public class Facility {
     private String street;
     private String buildingNumber;
 
+    public static Facility from(AddFacilityCommand command) {
+        return Facility.builder()
+                .name(command.getName())
+                .city(command.getCity())
+                .zipCode(command.getZipCode())
+                .street(command.getStreet())
+                .buildingNumber(command.getBuildingNumber())
+                .build();
+    }
+
+    public void update(AddFacilityCommand command) {
+        this.name = command.getName();
+        this.city = command.getCity();
+        this.zipCode = command.getZipCode();
+        this.street = command.getStreet();
+        this.buildingNumber = command.getBuildingNumber();
+    }
 }

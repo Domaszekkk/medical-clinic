@@ -1,6 +1,5 @@
 package com.example.medicalclinic;
 
-
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -18,21 +17,14 @@ public class UserService {
     }
 
     public User addUser(AddUserCommand command) {
-        User user = User.from(command);
-        return userJpaRepositoryPort.save(user);
+        return userJpaRepositoryPort.save(User.from(command));
     }
 
-    public void updateUser(String email, UpdateUserCommand command) {
-        User user = userJpaRepositoryPort.findByEmail(email)
+    public void updateUser(String email, UpdateUserRequest request) {
+        User user = userJpaRepositoryPort
+                .findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException(email));
-        user.updateFrom(command);
-        userJpaRepositoryPort.save(user);
-    }
-
-    public void updatePassword(String email, String password) {
-        User user = userJpaRepositoryPort.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException(email));
-        user.setPassword(password);
+        user.update(request);
         userJpaRepositoryPort.save(user);
     }
 

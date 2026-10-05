@@ -18,22 +18,21 @@ public class Patient {
     private LocalDate birthday;
     private User user;
 
-    public static Patient from(AddPatientCommand command, User user) {
+    public static Patient from(AddPatientCommand command) {
         return Patient.builder()
                 .idCardNo(command.getIdCardNo())
                 .firstName(command.getFirstName())
                 .lastName(command.getLastName())
                 .phoneNumber(command.getPhoneNumber())
                 .birthday(command.getBirthday())
-                .user(user)
                 .build();
     }
 
-    public void updateFrom(UpdatePatientCommand command) {
-        this.idCardNo = command.getIdCardNo();
-        this.firstName = command.getFirstName();
-        this.lastName = command.getLastName();
-        this.phoneNumber = command.getPhoneNumber();
-        this.birthday = command.getBirthday();
+    public void update(UpdatePatientRequest request) {
+        this.idCardNo = request.getIdCardNo();
+        this.firstName = request.getFirstName();
+        this.lastName = request.getLastName();
+        this.phoneNumber = request.getPhoneNumber();
+        this.birthday = request.getBirthday();
     }
 }

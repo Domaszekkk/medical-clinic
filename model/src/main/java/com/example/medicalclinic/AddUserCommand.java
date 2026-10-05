@@ -7,7 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AddUserCommand  {
+public class AddUserCommand {
     private String email;
     private String password;
 }

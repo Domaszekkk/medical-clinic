@@ -12,14 +12,7 @@ public class FacilityService {
     }
 
     public Facility addFacility(AddFacilityCommand command) {
-        Facility facility = Facility.builder()
-                .name(command.getName())
-                .city(command.getCity())
-                .zipCode(command.getZipCode())
-                .street(command.getStreet())
-                .buildingNumber(command.getBuildingNumber())
-                .build();
-        return facilityJpaRepositoryPort.save(facility);
+        return facilityJpaRepositoryPort.save(Facility.from(command));
     }
 
     public Facility getFacilityById(Long id) {
@@ -32,11 +25,7 @@ public class FacilityService {
         Facility facility = facilityJpaRepositoryPort
                 .findById(id)
                 .orElseThrow(() -> new FacilityNotFoundException(id));
-        facility.setName(command.getName());
-        facility.setCity(command.getCity());
-        facility.setZipCode(command.getZipCode());
-        facility.setStreet(command.getStreet());
-        facility.setBuildingNumber(command.getBuildingNumber());
+        facility.update(command);
         return facilityJpaRepositoryPort.save(facility);
     }
 

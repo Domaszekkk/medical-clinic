@@ -19,9 +19,8 @@ public class User {
                 .build();
     }
 
-    public void updateFrom(UpdateUserCommand command) {
-        this.email = command.getEmail();
+    public void update(UpdateUserRequest request) {
+        this.email = request.getEmail();
+        this.password = request.getPassword();
     }
 }
-
-

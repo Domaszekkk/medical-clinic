@@ -1,9 +1,6 @@
 package com.example.medicalclinic;
 
-
 import lombok.RequiredArgsConstructor;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 public class PatientService {
@@ -18,23 +15,34 @@ public class PatientService {
         User user = userJpaRepositoryPort
                 .findById(command.getUserId())
                 .orElseThrow(() -> new UserNotFoundException(command.getUserId()));
-        Patient patient = Patient.from(command, user);
+        Patient patient = Patient.from(command);
+        patient.setUser(user);
         return patientJpaRepositoryPort.save(patient);
     }
 
-    public List<Patient> getPatientByEmail(String email) {
+    public Patient getPatientByEmail(String email) {
         return patientJpaRepositoryPort
-                .findByUserEmail(email);
+                .findByUserEmail(email)
+                .orElseThrow(() -> new PatientNotFoundException(email));
     }
+
+    public Patient updatePatient(String email, UpdatePatientRequest request) {
+        Patient patient = patientJpaRepositoryPort
+                .findByUserEmail(email)
+                .orElseThrow(() -> new PatientNotFoundException(email));
+        patient.update(request);
+        return patientJpaRepositoryPort.save(patient);
+    }
+
+    public void updatePassword(String email, String password) {
+        Patient patient = patientJpaRepositoryPort
+                .findByUserEmail(email)
+                .orElseThrow(() -> new PatientNotFoundException(email));
+        patient.getUser().setPassword(password);
+        patientJpaRepositoryPort.save(patient);
+    }
+
     public void deletePatientByEmail(String email) {
         patientJpaRepositoryPort.deleteByUserEmail(email);
-    }
-
-    public Patient updatePatient(Long id, UpdatePatientCommand command) {
-        Patient patient = patientJpaRepositoryPort
-                .findById(id)
-                .orElseThrow(() -> new PatientNotFoundException(id));
-        patient.updateFrom(command);
-        return patientJpaRepositoryPort.save(patient);
     }
 }
