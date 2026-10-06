@@ -37,13 +37,22 @@
 		<java.version>21</java.version>
 		<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 		<sonar.coverage.exclusions>
-			**/dto/**,
-			**/mapper/**,
-			**/entity/**,
-			**/exception/**,
-			**/repository/**,
-			**/config/**,
-			**/specification/**
+			**/*Dto.java,
+			**/*Mapper.java,
+			**/*Entity.java,
+			**/*Exception.java,
+			**/*JpaRepository.java,
+			**/*JpaRepositoryAdapter.java,
+			**/*Config.java,
+			**/*Specifications.java,
+			**/*Factory.java,
+			**/*Command.java,
+			**/*Request.java,
+			**/PageResponse.java,
+			**/ErrorMessage.java,
+			**/Page.java,
+			**/Pageable.java,
+			**/MedicalClinicApplication.java
 		</sonar.coverage.exclusions>
 	</properties>
 	<dependencies>
