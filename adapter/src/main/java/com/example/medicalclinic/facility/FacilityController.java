@@ -5,8 +5,9 @@ import com.example.medicalclinic.Facility;
 import com.example.medicalclinic.FacilityDto;
 import com.example.medicalclinic.FacilityService;
 import com.example.medicalclinic.Page;
+import com.example.medicalclinic.PageFactory;
 import com.example.medicalclinic.PageResponse;
-import com.example.medicalclinic.Pageable;
+import com.example.medicalclinic.PageResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -15,8 +16,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/facilities")
@@ -29,21 +28,8 @@ public class FacilityController {
     @Operation(summary = "Get all facilities", description = "Returns a paginated list of all facilities")
     @GetMapping
     public PageResponse<FacilityDto> getAllFacilities(org.springframework.data.domain.Pageable pageable) {
-        Page<Facility> page = facilityService.getAllFacilities(
-                Pageable.builder()
-                        .pageNumber(pageable.getPageNumber())
-                        .pageSize(pageable.getPageSize())
-                        .build());
-        List<FacilityDto> content = page.getContent().stream()
-                .map(facilityMapper::toDto)
-                .toList();
-        return PageResponse.<FacilityDto>builder()
-                .content(content)
-                .pageNumber(page.getPageNumber())
-                .pageSize(page.getPageSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .build();
+        Page<Facility> page = facilityService.getAllFacilities(PageFactory.toPageable(pageable));
+        return PageResponseFactory.from(page, facilityMapper::toDto);
     }
 
     @Operation(summary = "Get facility by id", description = "Returns a single facility identified by its id")

@@ -1,6 +1,7 @@
 package com.example.medicalclinic.patient;
 
 import com.example.medicalclinic.Page;
+import com.example.medicalclinic.PageFactory;
 import com.example.medicalclinic.Pageable;
 import com.example.medicalclinic.Patient;
 import com.example.medicalclinic.PatientJpaRepositoryPort;
@@ -9,7 +10,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -20,18 +20,9 @@ public class PatientJpaRepositoryAdapter implements PatientJpaRepositoryPort {
 
     @Override
     public Page<Patient> findAll(Pageable pageable) {
-        org.springframework.data.domain.Page<PatientEntity> page = patientJpaRepository
-                .findAll(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-        List<Patient> content = page.getContent().stream()
-                .map(patientMapper::toModel)
-                .toList();
-        return Page.<Patient>builder()
-                .content(content)
-                .pageNumber(page.getNumber())
-                .pageSize(page.getSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .build();
+        return PageFactory.from(
+                patientJpaRepository.findAll(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())),
+                patientMapper::toModel);
     }
 
     @Override

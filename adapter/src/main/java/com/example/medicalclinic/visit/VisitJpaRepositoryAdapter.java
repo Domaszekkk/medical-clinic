@@ -1,6 +1,7 @@
 package com.example.medicalclinic.visit;
 
 import com.example.medicalclinic.Page;
+import com.example.medicalclinic.PageFactory;
 import com.example.medicalclinic.Pageable;
 import com.example.medicalclinic.Visit;
 import com.example.medicalclinic.VisitFilter;
@@ -32,18 +33,9 @@ public class VisitJpaRepositoryAdapter implements VisitJpaRepositoryPort {
                 Boolean.TRUE.equals(filter.available()) ? VisitSpecifications.isAvailable() : null,
                 scopeSpecification(filter.scope())
         );
-        org.springframework.data.domain.Page<VisitEntity> page = visitJpaRepository
-                .findAll(spec, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-        List<Visit> content = page.getContent().stream()
-                .map(visitMapper::toModel)
-                .toList();
-        return Page.<Visit>builder()
-                .content(content)
-                .pageNumber(page.getNumber())
-                .pageSize(page.getSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .build();
+        return PageFactory.from(
+                visitJpaRepository.findAll(spec, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())),
+                visitMapper::toModel);
     }
 
     @Override

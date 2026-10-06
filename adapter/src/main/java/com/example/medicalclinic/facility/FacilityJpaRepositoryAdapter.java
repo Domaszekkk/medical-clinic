@@ -3,12 +3,12 @@ package com.example.medicalclinic.facility;
 import com.example.medicalclinic.Facility;
 import com.example.medicalclinic.FacilityJpaRepositoryPort;
 import com.example.medicalclinic.Page;
+import com.example.medicalclinic.PageFactory;
 import com.example.medicalclinic.Pageable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -19,18 +19,9 @@ public class FacilityJpaRepositoryAdapter implements FacilityJpaRepositoryPort {
 
     @Override
     public Page<Facility> findAll(Pageable pageable) {
-        org.springframework.data.domain.Page<FacilityEntity> page = facilityJpaRepository
-                .findAll(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-        List<Facility> content = page.getContent().stream()
-                .map(facilityMapper::toModel)
-                .toList();
-        return Page.<Facility>builder()
-                .content(content)
-                .pageNumber(page.getNumber())
-                .pageSize(page.getSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .build();
+        return PageFactory.from(
+                facilityJpaRepository.findAll(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())),
+                facilityMapper::toModel);
     }
 
     @Override

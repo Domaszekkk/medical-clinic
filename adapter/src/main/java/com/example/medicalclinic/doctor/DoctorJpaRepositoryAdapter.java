@@ -3,13 +3,13 @@ package com.example.medicalclinic.doctor;
 import com.example.medicalclinic.Doctor;
 import com.example.medicalclinic.DoctorJpaRepositoryPort;
 import com.example.medicalclinic.Page;
+import com.example.medicalclinic.PageFactory;
 import com.example.medicalclinic.Pageable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -21,18 +21,9 @@ public class DoctorJpaRepositoryAdapter implements DoctorJpaRepositoryPort {
     @Override
     public Page<Doctor> findAll(String specialization, Pageable pageable) {
         Specification<DoctorEntity> spec = DoctorSpecifications.hasSpecialization(specialization);
-        org.springframework.data.domain.Page<DoctorEntity> page = doctorJpaRepository
-                .findAll(spec, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-        List<Doctor> content = page.getContent().stream()
-                .map(doctorMapper::toModel)
-                .toList();
-        return Page.<Doctor>builder()
-                .content(content)
-                .pageNumber(page.getNumber())
-                .pageSize(page.getSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .build();
+        return PageFactory.from(
+                doctorJpaRepository.findAll(spec, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())),
+                doctorMapper::toModel);
     }
 
     @Override

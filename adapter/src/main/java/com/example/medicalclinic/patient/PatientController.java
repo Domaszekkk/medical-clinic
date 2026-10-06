@@ -3,8 +3,9 @@ package com.example.medicalclinic.patient;
 import com.example.medicalclinic.AddPatientCommand;
 import com.example.medicalclinic.ChangePasswordCommand;
 import com.example.medicalclinic.Page;
+import com.example.medicalclinic.PageFactory;
 import com.example.medicalclinic.PageResponse;
-import com.example.medicalclinic.Pageable;
+import com.example.medicalclinic.PageResponseFactory;
 import com.example.medicalclinic.Patient;
 import com.example.medicalclinic.PatientDto;
 import com.example.medicalclinic.PatientService;
@@ -18,8 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/patients")
 @RequiredArgsConstructor
@@ -31,17 +30,8 @@ public class PatientController {
     @Operation(summary = "Get all patients", description = "Returns a paginated list of all patients")
     @GetMapping
     public PageResponse<PatientDto> getAllPatients(org.springframework.data.domain.Pageable pageable) {
-        Page<Patient> page = patientService.getAllPatients(toModelPageable(pageable));
-        List<PatientDto> content = page.getContent().stream()
-                .map(patientMapper::toDto)
-                .toList();
-        return PageResponse.<PatientDto>builder()
-                .content(content)
-                .pageNumber(page.getPageNumber())
-                .pageSize(page.getPageSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .build();
+        Page<Patient> page = patientService.getAllPatients(PageFactory.toPageable(pageable));
+        return PageResponseFactory.from(page, patientMapper::toDto);
     }
 
     @Operation(summary = "Create a new patient", description = "Creates a new patient linked to an existing user account")
@@ -94,12 +84,5 @@ public class PatientController {
     public void updatePassword(@Parameter(description = "Email of the patient whose password is being changed") @PathVariable String email,
                                @RequestBody ChangePasswordCommand command) {
         patientService.updatePassword(email, command.getPassword());
-    }
-
-    private Pageable toModelPageable(org.springframework.data.domain.Pageable pageable) {
-        return Pageable.builder()
-                .pageNumber(pageable.getPageNumber())
-                .pageSize(pageable.getPageSize())
-                .build();
     }
 }

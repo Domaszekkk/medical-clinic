@@ -2,8 +2,9 @@ package com.example.medicalclinic.visit;
 
 import com.example.medicalclinic.AddVisitCommand;
 import com.example.medicalclinic.Page;
+import com.example.medicalclinic.PageFactory;
 import com.example.medicalclinic.PageResponse;
-import com.example.medicalclinic.Pageable;
+import com.example.medicalclinic.PageResponseFactory;
 import com.example.medicalclinic.Visit;
 import com.example.medicalclinic.VisitDto;
 import com.example.medicalclinic.VisitFilter;
@@ -17,8 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -61,17 +60,8 @@ public class VisitController {
     @GetMapping("/visits")
     public PageResponse<VisitDto> getVisits(@ParameterObject VisitFilter filter,
                                             org.springframework.data.domain.Pageable pageable) {
-        Page<Visit> page = visitService.getVisits(filter, toModelPageable(pageable));
-        List<VisitDto> content = page.getContent().stream()
-                .map(visitMapper::toDto)
-                .toList();
-        return PageResponse.<VisitDto>builder()
-                .content(content)
-                .pageNumber(page.getPageNumber())
-                .pageSize(page.getPageSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .build();
+        Page<Visit> page = visitService.getVisits(filter, PageFactory.toPageable(pageable));
+        return PageResponseFactory.from(page, visitMapper::toDto);
     }
 
     @Operation(summary = "Cancel a visit",
@@ -86,12 +76,5 @@ public class VisitController {
             @Parameter(description = "Id of the visit to cancel") @PathVariable Long visitId,
             @Parameter(description = "Id of the doctor who owns the visit") @RequestParam(required = false) Long doctorId) {
         visitService.cancelVisit(visitId, doctorId);
-    }
-
-    private Pageable toModelPageable(org.springframework.data.domain.Pageable pageable) {
-        return Pageable.builder()
-                .pageNumber(pageable.getPageNumber())
-                .pageSize(pageable.getPageSize())
-                .build();
     }
 }

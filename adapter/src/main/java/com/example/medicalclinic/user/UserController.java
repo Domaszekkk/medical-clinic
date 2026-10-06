@@ -2,8 +2,9 @@ package com.example.medicalclinic.user;
 
 import com.example.medicalclinic.AddUserCommand;
 import com.example.medicalclinic.Page;
+import com.example.medicalclinic.PageFactory;
 import com.example.medicalclinic.PageResponse;
-import com.example.medicalclinic.Pageable;
+import com.example.medicalclinic.PageResponseFactory;
 import com.example.medicalclinic.UpdateUserRequest;
 import com.example.medicalclinic.User;
 import com.example.medicalclinic.UserDto;
@@ -17,8 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -30,17 +29,8 @@ public class UserController {
     @Operation(summary = "Get all users", description = "Returns a paginated list of all users")
     @GetMapping
     public PageResponse<UserDto> getAllUsers(org.springframework.data.domain.Pageable pageable) {
-        Page<User> page = userService.getAllUsers(toModelPageable(pageable));
-        List<UserDto> content = page.getContent().stream()
-                .map(userMapper::toDto)
-                .toList();
-        return PageResponse.<UserDto>builder()
-                .content(content)
-                .pageNumber(page.getPageNumber())
-                .pageSize(page.getPageSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .build();
+        Page<User> page = userService.getAllUsers(PageFactory.toPageable(pageable));
+        return PageResponseFactory.from(page, userMapper::toDto);
     }
 
     @Operation(summary = "Get user by email", description = "Returns a single user identified by their email address")
@@ -83,12 +73,5 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@Parameter(description = "Email of the user to delete") @PathVariable String email) {
         userService.deleteUser(email);
-    }
-
-    private Pageable toModelPageable(org.springframework.data.domain.Pageable pageable) {
-        return Pageable.builder()
-                .pageNumber(pageable.getPageNumber())
-                .pageSize(pageable.getPageSize())
-                .build();
     }
 }

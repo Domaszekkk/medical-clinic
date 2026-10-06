@@ -5,8 +5,9 @@ import com.example.medicalclinic.Doctor;
 import com.example.medicalclinic.DoctorDto;
 import com.example.medicalclinic.DoctorService;
 import com.example.medicalclinic.Page;
+import com.example.medicalclinic.PageFactory;
 import com.example.medicalclinic.PageResponse;
-import com.example.medicalclinic.Pageable;
+import com.example.medicalclinic.PageResponseFactory;
 import com.example.medicalclinic.UpdateDoctorRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,8 +17,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/doctors")
@@ -32,17 +31,8 @@ public class DoctorController {
     public PageResponse<DoctorDto> getDoctors(
             @Parameter(description = "Doctor specialization to filter by") @RequestParam(required = false) String specialization,
             org.springframework.data.domain.Pageable pageable) {
-        Page<Doctor> page = doctorService.getDoctors(specialization, toModelPageable(pageable));
-        List<DoctorDto> content = page.getContent().stream()
-                .map(doctorMapper::toDto)
-                .toList();
-        return PageResponse.<DoctorDto>builder()
-                .content(content)
-                .pageNumber(page.getPageNumber())
-                .pageSize(page.getPageSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .build();
+        Page<Doctor> page = doctorService.getDoctors(specialization, PageFactory.toPageable(pageable));
+        return PageResponseFactory.from(page, doctorMapper::toDto);
     }
 
     @Operation(summary = "Get doctor by id", description = "Returns a single doctor identified by their id")
@@ -97,12 +87,5 @@ public class DoctorController {
             @Parameter(description = "Id of the doctor") @PathVariable Long doctorId,
             @Parameter(description = "Id of the facility") @PathVariable Long facilityId) {
         return doctorMapper.toDto(doctorService.assignDoctorToFacility(doctorId, facilityId));
-    }
-
-    private Pageable toModelPageable(org.springframework.data.domain.Pageable pageable) {
-        return Pageable.builder()
-                .pageNumber(pageable.getPageNumber())
-                .pageSize(pageable.getPageSize())
-                .build();
     }
 }
