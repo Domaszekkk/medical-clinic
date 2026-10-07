@@ -1,0 +1,38 @@
+package com.example.medicalclinic;
+
+import lombok.*;
+
+import java.time.LocalDate;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class Patient {
+    private Long id;
+    private String idCardNo;
+    private String firstName;
+    private String lastName;
+    private String phoneNumber;
+    private LocalDate birthday;
+    private User user;
+
+    public static Patient from(AddPatientCommand command) {
+        return Patient.builder()
+                .idCardNo(command.getIdCardNo())
+                .firstName(command.getFirstName())
+                .lastName(command.getLastName())
+                .phoneNumber(command.getPhoneNumber())
+                .birthday(command.getBirthday())
+                .build();
+    }
+
+    public void update(UpdatePatientRequest request) {
+        this.idCardNo = request.getIdCardNo();
+        this.firstName = request.getFirstName();
+        this.lastName = request.getLastName();
+        this.phoneNumber = request.getPhoneNumber();
+        this.birthday = request.getBirthday();
+    }
+}

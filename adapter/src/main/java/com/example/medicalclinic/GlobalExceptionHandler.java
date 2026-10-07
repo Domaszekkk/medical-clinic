@@ -1,0 +1,16 @@
+package com.example.medicalclinic;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MedicalClinicException.class)
+    public ResponseEntity<ErrorMessage> handleMedicalClinicException(MedicalClinicException exception) {
+        return ResponseEntity
+                .status(exception.getResponseCode())
+                .body(new ErrorMessage(exception.getMessage()));
+    }
+}
